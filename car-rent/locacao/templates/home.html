@@ -7,11 +7,7 @@
 <body>
     <h1>Sistema de Locação de Veículos</h1>
 
-    <p>Bem-vindo, {{ user.username }}!</p>
+    {% include '_menu.html' %}
 
-    <form method="post" action="{% url 'logout' %}">
-        {% csrf_token %}
-        <button type="submit">Sair</button>
-    </form>
 </body>
 </html>

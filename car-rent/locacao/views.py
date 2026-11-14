@@ -1,3 +1,209 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.db import transaction
+from django.db.models import Q
+from django.db.models.functions import Lower
+from functools import wraps
+
+from .forms import FuncionarioForm
+from .models import Funcionario
 
 # Create your views here.
+
+User = get_user_model()
+
+
+def admin_required(view_func):
+    @wraps(view_func)
+    @login_required
+    def wrapped_view(request, *args, **kwargs):
+        if not request.user.is_superuser:
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+
+    return wrapped_view
+
+
+def salvar_funcionario_com_usuario(form):
+    funcionario = form.save(commit=False)
+    password = form.cleaned_data.get('password1')
+
+    if funcionario.user_id:
+        usuario = funcionario.user
+        usuario.username = form.cleaned_data['username']
+        usuario.is_superuser = funcionario.isAdmin
+        usuario.is_active = funcionario.ativo
+        if password:
+            usuario.set_password(password)
+        usuario.save()
+    else:
+        usuario = User.objects.create_user(
+            username=form.cleaned_data['username'],
+            password=password,
+            is_superuser=funcionario.isAdmin,
+            is_active=funcionario.ativo,
+        )
+        funcionario.user = usuario
+
+    funcionario.save()
+    return funcionario
+
+
+@admin_required
+def cadastrar_funcionario(request):
+    form = FuncionarioForm()
+
+    if request.method == 'POST':
+        form = FuncionarioForm(request.POST)
+
+        if form.is_valid():
+            with transaction.atomic():
+                funcionario = salvar_funcionario_com_usuario(form)
+
+            messages.success(
+                request,
+                f'Funcionário {funcionario.nome} cadastrado com sucesso!',
+            )
+
+            return redirect('listar_funcionarios')
+
+    dados = {
+        'formulario': form
+    }
+
+    return render(request, "cadastrar_funcionario.html", dados)
+
+
+@admin_required
+def listar_funcionarios(request):
+
+    ordem = request.GET.get('ordem')
+    nome_da_pesquisa = request.GET.get('nome_da_pesquisa', '')
+
+    funcionarios = Funcionario.objects.filter(
+        nome__icontains=nome_da_pesquisa,
+        ativo=True
+    ).order_by(Lower('nome'))
+
+    if ordem == 'decrescente':
+        funcionarios = Funcionario.objects.filter(
+            nome__icontains=nome_da_pesquisa,
+            ativo=True
+        ).order_by(Lower('nome').desc())
+
+    dados = {
+        'funcionarios': funcionarios,
+        'nome_da_pesquisa': nome_da_pesquisa,
+    }
+
+    return render(request, 'listar_funcionarios.html', dados)
+
+
+@admin_required
+def editar_funcionario(request, id):
+
+    funcionario = Funcionario.objects.select_related('user').get(id=id)
+
+    form = FuncionarioForm(instance=funcionario)
+
+    if request.method == 'POST':
+        form = FuncionarioForm(request.POST, instance=funcionario)
+
+        if form.is_valid():
+            with transaction.atomic():
+                funcionario = salvar_funcionario_com_usuario(form)
+
+            messages.success(
+                request,
+                f'Funcionário {funcionario.nome} alterado com sucesso!',
+            )
+
+            return redirect('listar_funcionarios')
+
+    dados = {
+        'formulario': form
+    }
+
+    return render(request, 'editar_funcionario.html', dados)
+
+
+@admin_required
+def excluir_funcionario(request, id):
+
+    funcionario = Funcionario.objects.select_related('user').get(id=id)
+
+    nome = funcionario.nome
+    sobrenome = funcionario.sobrenome
+
+    with transaction.atomic():
+        if funcionario.user_id:
+            funcionario.user.delete()
+        funcionario.delete()
+
+    mensagem = f'Funcionário {nome} {sobrenome} Excluído com sucesso'
+    messages.success(request, mensagem)
+
+    return redirect('listar_funcionarios')
+
+
+@admin_required
+def funcionarios_inativos(request):
+
+    funcionarios = Funcionario.objects.filter(
+        ativo=False
+    )
+
+    dados = {
+        'funcionarios': funcionarios
+    }
+
+    return render(request, 'funcionarios_inativos.html', dados)
+
+
+@admin_required
+def ativar_funcionario(request, id):
+
+    funcionario = Funcionario.objects.get(id=id)
+
+    nome = funcionario.nome
+    sobrenome = funcionario.sobrenome
+
+    funcionario.ativo = True
+
+    with transaction.atomic():
+        funcionario.save()
+
+        if funcionario.user_id:
+            funcionario.user.is_active = True
+            funcionario.user.save(update_fields=['is_active'])
+
+    mensagem = f'Funcionario {nome} {sobrenome} Ativado com Sucesso'
+    messages.success(request, mensagem)
+
+    return redirect('funcionarios_inativos')
+
+
+@admin_required
+def desativar_funcionario(request, id):
+
+    funcionario = Funcionario.objects.get(id=id)
+
+    nome = funcionario.nome
+    sobrenome = funcionario.sobrenome
+
+    funcionario.ativo = False
+
+    with transaction.atomic():
+        funcionario.save()
+
+        if funcionario.user_id:
+            funcionario.user.is_active = False
+            funcionario.user.save(update_fields=['is_active'])
+
+    mensagem = f'Funcionário {nome} {sobrenome} Desativado com sucesso'
+    messages.success(request, mensagem)
+
+    return redirect('listar_funcionarios')
