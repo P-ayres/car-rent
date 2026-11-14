@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Locação de Veículos</title>
+</head>
+
+<body>
+    <h1>Locação de Veículos</h1>
+
+    <h2>Entrar no sistema</h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button type="submit">Entrar</button>
+    </form>
+
+    {% if form.errors %}
+    <p>Usuário ou senha inválidos.</p>
+    {% endif %}
+</body>
+
+</html>

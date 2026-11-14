@@ -1,0 +1,22 @@
+<nav>
+    <div>
+        <a href="{% url 'home' %}">Início</a>
+        {% if user.is_superuser %}
+            <a href="{% url 'cadastrar_funcionario' %}">Cadastrar funcionário</a>
+            <a href="{% url 'listar_funcionarios' %}">Listar Funcionários</a>
+            <a href="{% url 'funcionarios_inativos' %}">Funcionários inativos</a>
+        {% endif %}
+    </div>
+    <div class="usuario-menu">
+        {% if user.is_authenticated %}
+            <span>Olá, {{ user.username }}!</span>
+
+            <form method="post" action="{% url 'logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="link-logout">Sair</button>
+            </form>
+        {% else %}
+            <a href="{% url 'login' %}">Entrar</a>
+        {% endif %}
+    </div>
+</nav>
