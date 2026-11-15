@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
@@ -7,8 +7,8 @@ from django.db import transaction
 from django.db.models import Q
 from django.db.models.functions import Lower
 from functools import wraps
-from .forms import FuncionarioForm, VeiculoForm
-from .models import Funcionario, Veiculo
+from .forms import ClienteForm, FuncionarioForm, VeiculoForm
+from .models import Cliente, Funcionario, Veiculo
 
 # Create your views here.
 
@@ -304,3 +304,85 @@ def excluir_veiculo(request, id):
     messages.success(request, mensagem)
 
     return redirect('listar_veiculos')
+
+
+@admin_required
+def cadastrar_cliente(request):
+    form = ClienteForm()
+
+    if request.method == 'POST':
+        form = ClienteForm(request.POST)
+
+        if form.is_valid():
+            cliente = form.save()
+
+            messages.success(
+                request,
+                f'Cliente {cliente.nome} cadastrado com sucesso!',
+            )
+
+            return redirect('listar_clientes')
+
+    dados = {
+        'formulario': form
+    }
+
+    return render(request, 'cadastrar_cliente.html', dados)
+
+
+@admin_required
+def listar_clientes(request):
+
+    clientes = Cliente.objects.order_by(Lower('nome'))
+
+    dados = {
+        'clientes': clientes,
+    }
+
+    return render(request, 'listar_clientes.html', dados)
+
+
+@admin_required
+def editar_cliente(request, id):
+
+    cliente = get_object_or_404(Cliente, id=id)
+
+    form = ClienteForm(instance=cliente)
+
+    if request.method == 'POST':
+        form = ClienteForm(request.POST, instance=cliente)
+
+        if form.is_valid():
+            cliente = form.save()
+
+            messages.success(
+                request,
+                f'Cliente {cliente.nome} alterado com sucesso!',
+            )
+
+            return redirect('listar_clientes')
+
+    dados = {
+        'formulario': form
+    }
+
+    return render(request, 'editar_cliente.html', dados)
+
+
+@admin_required
+def excluir_cliente(request, id):
+
+    cliente = get_object_or_404(Cliente, id=id)
+
+    # TODO: quando o model de Reserva existir, bloquear a exclusão se o
+    # cliente tiver reservas ativas (requisito do caso de uso).
+
+    nome = cliente.nome
+    sobrenome = cliente.sobrenome
+
+    cliente.delete()
+
+    mensagem = f'Cliente {nome} {sobrenome} Excluído com sucesso'
+    messages.success(request, mensagem)
+
+    return redirect('listar_clientes')

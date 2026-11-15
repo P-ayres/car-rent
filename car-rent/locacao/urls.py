@@ -28,4 +28,11 @@ urlpatterns = [
     path('veiculos/<int:id>/editar/', views.editar_veiculo, name='editar_veiculo'),
     path('veiculos/<int:id>/excluir/',
          views.excluir_veiculo, name='excluir_veiculo'),
+    path('clientes/', views.listar_clientes, name='listar_clientes'),
+    path('clientes/cadastrar/', views.cadastrar_cliente,
+         name='cadastrar_cliente'),
+    path('clientes/<int:id>/editar/',
+         views.editar_cliente, name='editar_cliente'),
+    path('clientes/<int:id>/excluir/',
+         views.excluir_cliente, name='excluir_cliente'),
 ]

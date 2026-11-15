@@ -1,0 +1,71 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title> Gerenciar Clientes </title>
+</head>
+<body>
+
+    {% include '_menu.html' %}
+
+    <h1> Gerenciar Clientes </h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'cadastrar_cliente' %}"> Adicionar cliente </a>
+
+    <div class="lista-funcionario">
+        <table border="">
+
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Sobrenome</th>
+                    <th>CPF</th>
+                    <th>CNPJ</th>
+                    <th>Endereço</th>
+                    <th>Telefone</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for cliente in clientes %}
+
+                <tr>
+                    <td> {{ cliente.nome }} </td>
+                    <td> {{ cliente.sobrenome }} </td>
+                    <td> {{ cliente.cpf|default:"-" }} </td>
+                    <td> {{ cliente.cnpj|default:"-" }} </td>
+                    <td> {{ cliente.endereco }} </td>
+                    <td> {{ cliente.telefone }} </td>
+                    <td>
+                        <a href="{% url 'editar_cliente' cliente.id %}"> Editar </a> |
+                        <a href="{% url 'excluir_cliente' cliente.id %}"> Remover </a>
+                    </td>
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="7"> Nenhum cliente cadastrado. </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+    </div>
+
+</body>
+</html>
