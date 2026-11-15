@@ -1,5 +1,5 @@
 <nav>
-    <div>
+    <div class="nao-imprimir">
         <a href="{% url 'home' %}">Início</a>
         {% if user.is_superuser %}
             <a href="{% url 'cadastrar_funcionario' %}">Cadastrar funcionário</a>
@@ -11,11 +11,11 @@
     </div>
     <div class="usuario-menu">
         {% if user.is_authenticated %}
-            <span>Olá, {{ user.username }}!</span>
+            <span class="nao-imprimir">Olá, {{ user.username }}!</span>
 
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
-                <button type="submit" class="link-logout">Sair</button>
+                <button class="nao-imprimir" type="submit" class="link-logout">Sair</button>
             </form>
         {% else %}
             <a href="{% url 'login' %}">Entrar</a>
