@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model, password_validation
 from django.core.exceptions import ValidationError
 
-from .models import Funcionario
+from .models import Cliente, Funcionario
 
 User = get_user_model()
 
@@ -93,4 +93,62 @@ class FuncionarioForm(forms.ModelForm):
             except ValidationError as error:
                 self.add_error('password1', error)
 
+        return cleaned_data
+
+
+class ClienteForm(forms.ModelForm):
+    class Meta:
+        model = Cliente
+        fields = [
+            'nome',
+            'sobrenome',
+            'cpf',
+            'cnpj',
+            'endereco',
+            'telefone',
+        ]
+
+        labels = {
+            'cpf': 'CPF',
+            'cnpj': 'CNPJ',
+            'endereco': 'Endereço',
+        }
+
+        widgets = {
+            'nome': forms.TextInput(attrs={
+                'class': 'form-control text-red',
+                'placeholder': 'Digite o nome do cliente'
+            }),
+
+            'sobrenome': forms.TextInput(attrs={
+                'class': 'form-control text-red',
+                'placeholder': 'Digite o sobrenome do cliente'
+
+            }),
+
+            'cpf': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Digite o CPF do cliente'
+            }),
+
+            'cnpj': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Digite o CNPJ do cliente'
+            }),
+
+            'endereco': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Digite o endereço do cliente'
+            }),
+
+            'telefone': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '(00) 00000-0000'
+            }),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get('cpf') and not cleaned_data.get('cnpj'):
+            raise forms.ValidationError('Informe o CPF ou o CNPJ do cliente.')
         return cleaned_data

@@ -23,4 +23,11 @@ urlpatterns = [
          views.ativar_funcionario, name='ativar_funcionario'),
     path('funcionarios/<int:id>/desativar/',
          views.desativar_funcionario, name='desativar_funcionario'),
+    path('clientes/', views.listar_clientes, name='listar_clientes'),
+    path('clientes/cadastrar/', views.cadastrar_cliente,
+         name='cadastrar_cliente'),
+    path('clientes/<int:id>/editar/',
+         views.editar_cliente, name='editar_cliente'),
+    path('clientes/<int:id>/excluir/',
+         views.excluir_cliente, name='excluir_cliente'),
 ]

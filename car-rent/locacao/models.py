@@ -35,3 +35,22 @@ class Funcionario(models.Model):
         self.sobrenome = self.sobrenome.title()
 
         super().save(*args, **kwargs)
+
+
+class Cliente(models.Model):
+    nome = models.CharField(max_length=100)
+    sobrenome = models.CharField(max_length=100)
+    cpf = models.CharField(max_length=14, unique=True, null=True, blank=True)
+    cnpj = models.CharField(max_length=18, unique=True, null=True, blank=True)
+    endereco = models.CharField(max_length=200, default='')
+    telefone = models.CharField(max_length=20, default='')
+    data_cadastro = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.nome + " " + self.sobrenome
+
+    def save(self, *args, **kwargs):
+        self.nome = self.nome.title()
+        self.sobrenome = self.sobrenome.title()
+
+        super().save(*args, **kwargs)
