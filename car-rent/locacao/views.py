@@ -8,7 +8,7 @@ from django.db.models import Q
 from django.db.models.functions import Lower
 from functools import wraps
 from .forms import ClienteForm, FuncionarioForm, ReservaForm, VeiculoForm
-from .models import Cliente, Funcionario, Reserva, Veiculo
+from .models import CATEGORIA_CHOICES, STATUS_CHOICES, Cliente, Funcionario, Reserva, Veiculo
 
 # Create your views here.
 
@@ -237,22 +237,33 @@ def cadastrar_veiculo(request):
 
 @admin_required
 def listar_veiculos(request):
-
     ordem = request.GET.get('ordem')
     nome_da_pesquisa = request.GET.get('nome_da_pesquisa', '')
+    categoria_pesquisa = request.GET.get('categoria_pesquisa', '')
+    status_pesquisa = request.GET.get('status_pesquisa', '')
 
     veiculos = Veiculo.objects.filter(
         modelo__icontains=nome_da_pesquisa,
+        categoria__icontains=categoria_pesquisa,
+        status__icontains=status_pesquisa,
     ).order_by(Lower('modelo'))
 
     if ordem == 'decrescente':
         veiculos = Veiculo.objects.filter(
             modelo__icontains=nome_da_pesquisa,
+            categoria__icontains=categoria_pesquisa,
+            status__icontains=status_pesquisa,
         ).order_by(Lower('modelo').desc())
 
     dados = {
         'veiculos': veiculos,
         'nome_da_pesquisa': nome_da_pesquisa,
+        'categoria_pesquisa': categoria_pesquisa,
+        'status_pesquisa': status_pesquisa,
+        'categorias': CATEGORIA_CHOICES,
+        'status_opcoes': STATUS_CHOICES,
+        'ordem': ordem,
+        'parametros_filtro': request.GET.urlencode(),
     }
 
     return render(request, 'listar_veiculos.html', dados)
@@ -480,3 +491,37 @@ def cancelar_reserva(request, id):
     )
 
     return redirect('listar_reservas')
+
+
+@login_required
+def listar_veiculos_disponiveis(request):
+    ordem = request.GET.get('ordem')
+    nome_da_pesquisa = request.GET.get('nome_da_pesquisa', '')
+    categoria_pesquisa = request.GET.get('categoria_pesquisa', '')
+    status_pesquisa = request.GET.get('status_pesquisa', 'D')
+
+    veiculos = Veiculo.objects.filter(
+        modelo__icontains=nome_da_pesquisa,
+        categoria__icontains=categoria_pesquisa,
+        status__icontains=status_pesquisa,
+    ).order_by(Lower('modelo'))
+
+    if ordem == 'decrescente':
+        veiculos = Veiculo.objects.filter(
+            modelo__icontains=nome_da_pesquisa,
+            categoria__icontains=categoria_pesquisa,
+            status__icontains=status_pesquisa,
+        ).order_by(Lower('modelo').desc())
+
+    dados = {
+        'veiculos': veiculos,
+        'nome_da_pesquisa': nome_da_pesquisa,
+        'categoria_pesquisa': categoria_pesquisa,
+        'status_pesquisa': status_pesquisa,
+        'categorias': CATEGORIA_CHOICES,
+        'status_opcoes': STATUS_CHOICES,
+        'ordem': ordem,
+        'parametros_filtro': request.GET.urlencode(),
+    }
+
+    return render(request, 'listar_veiculos_disponiveis.html', dados)
