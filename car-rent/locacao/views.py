@@ -7,9 +7,8 @@ from django.db import transaction
 from django.db.models import Q
 from django.db.models.functions import Lower
 from functools import wraps
-
-from .forms import ClienteForm, FuncionarioForm
-from .models import Cliente, Funcionario
+from .forms import ClienteForm, FuncionarioForm, VeiculoForm
+from .models import Cliente, Funcionario, Veiculo
 
 # Create your views here.
 
@@ -207,6 +206,104 @@ def desativar_funcionario(request, id):
     messages.success(request, mensagem)
 
     return redirect('listar_funcionarios')
+
+
+@admin_required
+def cadastrar_veiculo(request):
+
+    if request.method == 'POST':
+        form = VeiculoForm(request.POST)
+
+        if form.is_valid():
+            with transaction.atomic():
+                veiculo = form.save()
+
+            messages.success(
+                request,
+                f'Veículo {veiculo.modelo} cadastrado com sucesso!',
+            )
+
+            return redirect('listar_veiculos')
+
+    else:
+        form = VeiculoForm()
+
+    dados = {
+        'formulario': form
+    }
+
+    return render(request, 'cadastrar_veiculo.html', dados)
+
+
+@admin_required
+def listar_veiculos(request):
+
+    ordem = request.GET.get('ordem')
+    nome_da_pesquisa = request.GET.get('nome_da_pesquisa', '')
+
+    veiculos = Veiculo.objects.filter(
+        modelo__icontains=nome_da_pesquisa,
+    ).order_by(Lower('modelo'))
+
+    if ordem == 'decrescente':
+        veiculos = Veiculo.objects.filter(
+            modelo__icontains=nome_da_pesquisa,
+        ).order_by(Lower('modelo').desc())
+
+    dados = {
+        'veiculos': veiculos,
+        'nome_da_pesquisa': nome_da_pesquisa,
+    }
+
+    return render(request, 'listar_veiculos.html', dados)
+
+
+@admin_required
+def editar_veiculo(request, id):
+
+    veiculo = Veiculo.objects.get(id=id)
+
+    if request.method == 'POST':
+        form = VeiculoForm(request.POST, instance=veiculo)
+
+        if form.is_valid():
+            with transaction.atomic():
+                veiculo = form.save()
+
+            messages.success(
+                request,
+                f'Veículo {veiculo.modelo} atualizado com sucesso!',
+            )
+
+            return redirect('listar_veiculos')
+
+    else:
+        form = VeiculoForm(instance=veiculo)
+
+    dados = {
+        'formulario': form
+    }
+
+    return render(request, 'cadastrar_veiculo.html', dados)
+
+
+@admin_required
+def excluir_veiculo(request, id):
+
+    with transaction.atomic():
+        veiculo = Veiculo.objects.select_for_update().get(id=id)
+
+        if veiculo.status != 'D':
+            messages.error(request, 'Somente veículos disponíveis podem ser removidos.')
+            return redirect('listar_veiculos')
+
+        modelo = veiculo.modelo
+        veiculo.delete()
+
+    mensagem = f'Veículo {modelo} Excluído com sucesso'
+    messages.success(request, mensagem)
+
+    return redirect('listar_veiculos')
 
 
 @admin_required

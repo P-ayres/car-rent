@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model, password_validation
 from django.core.exceptions import ValidationError
 
-from .models import Cliente, Funcionario
+from .models import Cliente, Funcionario, Veiculo
 
 User = get_user_model()
 
@@ -94,6 +94,48 @@ class FuncionarioForm(forms.ModelForm):
                 self.add_error('password1', error)
 
         return cleaned_data
+
+
+class VeiculoForm(forms.ModelForm):
+    class Meta:
+        model = Veiculo
+        fields = [
+            'modelo',
+            'placa',
+            'categoria',
+            'status',
+            'preco_locacao',
+            'marca',
+        ]
+        labels = {
+            'preco_locacao': 'Preço de Locação',
+        }
+        widgets = {
+            'modelo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Digite o modelo do veículo'
+            }),
+            'placa': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Digite a placa do veículo'
+            }),
+            'categoria': forms.Select(attrs={
+                'class': 'form-select',
+                'placeholder': 'Selecione a categoria do veículo'
+            }),
+            'preco_locacao': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Digite o preço de locação'
+            }),
+            'marca': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Digite a marca do veículo'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-select',
+                'placeholder': 'Selecione o status do veículo'
+            }),
+        }
 
 
 class ClienteForm(forms.ModelForm):

@@ -1,0 +1,78 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href=" {% static "css/style.css" %}">
+    <title> Listar Veículos </title>
+</head>
+<body>
+
+    {% include '_menu.html' %}
+
+    {% for message in messages %}
+    <p>{{ message }}</p>
+    {% endfor %}
+
+
+    <div class="form-pesquisa nao-imprimir">
+        <form method="GET"> 
+            <input type="text" name="nome_da_pesquisa" placeholder="Pesquisar veículo" value='{{ nome_da_pesquisa }}'> 
+            <button type="submit">Pesquisar</button> 
+        </form>
+    </div>
+
+
+    <h1> Lista de Veículos </h1>
+
+    <div class="lista-veiculo">
+        <table border="">
+
+            <thead>
+                <tr>
+                    <th>Modelo  <a href="?ordem=crescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↑ </a>  <a href="?ordem=decrescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↓ </a>  </th>
+                    <th>Placa</th>
+                    <th>Categoria</th>
+                    <th>Status</th>
+                    <th>Preço de Locação</th>
+                    <th>Marca</th>
+                    <th class="nao-imprimir">Ações</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                
+                {% for veiculo in veiculos %}
+
+                <tr>
+                    <td> {{ veiculo.modelo }} </td>
+                    <td> {{ veiculo.placa }} </td>
+                    <td> {{ veiculo.categoria }} </td>
+                    <td> {{ veiculo.status }} </td>
+                    <td> {{ veiculo.preco_locacao }} </td>
+                    <td> {{ veiculo.marca }} </td>
+
+                    <td class="nao-imprimir"> 
+                        <a href="{% url 'editar_veiculo' veiculo.id %}"> Editar </a> |
+                        <a href="{% url 'excluir_veiculo' veiculo.id %}"> Remover </a> |
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        <br><br>
+
+        <button class="nao-imprimir" onclick="window.print()">
+             Imprimir Veículos
+        </button>
+    </div>
+</body>
+</html>
+
+    
