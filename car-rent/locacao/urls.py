@@ -23,4 +23,9 @@ urlpatterns = [
          views.ativar_funcionario, name='ativar_funcionario'),
     path('funcionarios/<int:id>/desativar/',
          views.desativar_funcionario, name='desativar_funcionario'),
+    path('veiculos/cadastrar/', views.cadastrar_veiculo, name='cadastrar_veiculo'),
+    path('veiculos/', views.listar_veiculos, name='listar_veiculos'),
+    path('veiculos/<int:id>/editar/', views.editar_veiculo, name='editar_veiculo'),
+    path('veiculos/<int:id>/excluir/',
+         views.excluir_veiculo, name='excluir_veiculo'),
 ]
