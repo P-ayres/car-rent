@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href=" {% static "css/style.css" %}">
+    <link rel="stylesheet" href=" {% static "css/styles.css" %}">
     <title>Cadastrar Veículo</title>
 </head>
 <body>
@@ -14,14 +14,14 @@
 
     <h1>Cadastrar Veículo</h1>
 
-    <div class="container-principal">
+    <div class="container-principal form-container">
         <form method="post">
 
             {% csrf_token %}
 
             {{ formulario.as_p }}
 
-            <button type="submit">Cadastrar</button>
+            <button  class="button" type="submit">Cadastrar</button>
 
         </form>
     </div>
