@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href=" {% static "css/style.css" %}">
+    <link rel="stylesheet" href=" {% static "css/styles.css" %}">
     <title> Listar Veículos </title>
 </head>
 <body>
@@ -17,18 +17,17 @@
     {% endfor %}
 
 
-    <div class="form-pesquisa nao-imprimir">
-        <form method="GET"> 
-            <input type="text" name="nome_da_pesquisa" placeholder="Pesquisar veículo" value='{{ nome_da_pesquisa }}'> 
-            <button type="submit">Pesquisar</button> 
-        </form>
-    </div>
-
-
+    
     <h1> Lista de Veículos </h1>
-
-    <div class="lista-veiculo">
-        <table border="">
+    
+    <div class="lista-veiculo container-principal">
+        <div class="form-pesquisa nao-imprimir">
+            <form method="GET"> 
+                <input type="text" name="nome_da_pesquisa" placeholder="Pesquisar veículo" value='{{ nome_da_pesquisa }}'> 
+                <button class="button pesquisar" type="submit">Pesquisar</button> 
+            </form>
+        </div>
+        <table class="tabela" border="">
 
             <thead>
                 <tr>
@@ -68,7 +67,7 @@
 
         <br><br>
 
-        <button class="nao-imprimir" onclick="window.print()">
+        <button class="button nao-imprimir" onclick="window.print()">
              Imprimir Veículos
         </button>
     </div>

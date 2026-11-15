@@ -1,25 +1,74 @@
+{% load static %}
+
 <nav>
-    <div class="nao-imprimir">
+    <div class="nao-imprimir menu-links">
         <a href="{% url 'home' %}">Início</a>
+
         {% if user.is_superuser %}
-            <a href="{% url 'cadastrar_funcionario' %}">Cadastrar funcionário</a>
-            <a href="{% url 'listar_funcionarios' %}">Listar Funcionários</a>
-            <a href="{% url 'funcionarios_inativos' %}">Funcionários inativos</a>
-            <a href="{% url 'listar_clientes' %}">Gerenciar Clientes</a>
-            <a href="{% url 'cadastrar_veiculo' %}">Cadastrar Veículo</a>
-            <a href="{% url 'listar_veiculos' %}">Listar Veículos</a>
+
+            <div class="dropdown">
+                <span class="summary">Funcionários</span>
+
+                <div class="dropdown-content">
+                    <a href="{% url 'cadastrar_funcionario' %}">
+                        Cadastrar funcionário
+                    </a>
+
+                    <a href="{% url 'listar_funcionarios' %}">
+                        Listar funcionários
+                    </a>
+
+                    <a href="{% url 'funcionarios_inativos' %}">
+                        Funcionários inativos
+                    </a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <span class="summary">Clientes</span>
+
+                <div class="dropdown-content">
+                    <a href="{% url 'cadastrar_cliente' %}">
+                        Cadastrar cliente
+                    </a>
+
+                    <a href="{% url 'listar_clientes' %}">
+                        Listar clientes
+                    </a>
+                </div>
+            </div>
+
+            <div class="dropdown">
+                <span class="summary">Veículos</span>
+
+                <div class="dropdown-content">
+                    <a href="{% url 'cadastrar_veiculo' %}">
+                        Cadastrar veículo
+                    </a>
+
+                    <a href="{% url 'listar_veiculos' %}">
+                        Listar veículos
+                    </a>
+                </div>
+            </div>
+
         {% endif %}
     </div>
+
     <div class="usuario-menu">
         {% if user.is_authenticated %}
-            <span class="nao-imprimir">Olá, {{ user.username }}!</span>
+            <span class="nao-imprimir">
+                Olá, {{ user.username }}!
+            </span>
 
             <form method="post" action="{% url 'logout' %}">
                 {% csrf_token %}
-                <button class="nao-imprimir" type="submit" class="link-logout">Sair</button>
+                <button class="nao-imprimir link-logout" type="submit">
+                    Sair
+                </button>
             </form>
         {% else %}
-            <a href="{% url 'login' %}">Entrar</a>
+            <a class="nao-imprimir" href="{% url 'login' %}">Entrar</a>
         {% endif %}
     </div>
 </nav>

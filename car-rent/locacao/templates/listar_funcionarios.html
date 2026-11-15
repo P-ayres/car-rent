@@ -5,27 +5,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href=" {% static "css/style.css" %}">
+    <link rel="stylesheet" href=" {% static "css/styles.css" %}">
     <title> Listar Funcionarios </title>
 </head>
 <body>
 
     {% include '_menu.html' %}
-
-
-    <div class="form-pesquisa nao-imprimir">
-        <form method="GET"> 
-            <input type="text" name="nome_da_pesquisa" placeholder="Pesquisar funcionário" value='{{ nome_da_pesquisa }}'> 
-            <button class="button" type="submit">Pesquisar</button> 
-        </form>
-    </div>
-
-
     <h1> Lista de Funcionários </h1>
 
-    <div class="lista-funcionario">
-        <table border="">
+    <div class="lista-funcionario container-principal">
+        <div class="form-pesquisa nao-imprimir">
+            <form method="GET"> 
+                <input class="input-funcionario" type="text" name="nome_da_pesquisa" placeholder="Pesquisar funcionário" value='{{ nome_da_pesquisa }}'> 
+                <button class="button pesquisar" type="submit">Pesquisar</button> 
+            </form>
+        </div>
 
+        <table class="tabela" border="">
             <thead>
                 <tr>
                     <th>Nome  <a href="?ordem=crescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↑ </a>  <a href="?ordem=decrescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↓ </a>  </th>

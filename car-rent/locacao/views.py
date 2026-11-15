@@ -294,7 +294,8 @@ def excluir_veiculo(request, id):
         veiculo = Veiculo.objects.select_for_update().get(id=id)
 
         if veiculo.status != 'D':
-            messages.error(request, 'Somente veículos disponíveis podem ser removidos.')
+            messages.error(
+                request, 'Somente veículos disponíveis podem ser removidos.')
             return redirect('listar_veiculos')
 
         modelo = veiculo.modelo
@@ -332,11 +333,21 @@ def cadastrar_cliente(request):
 
 @admin_required
 def listar_clientes(request):
+    ordem = request.GET.get('ordem')
+    nome_da_pesquisa = request.GET.get('nome_da_pesquisa', '')
 
-    clientes = Cliente.objects.order_by(Lower('nome'))
+    clientes = Cliente.objects.filter(
+        nome__icontains=nome_da_pesquisa,
+    ).order_by(Lower('nome'))
+
+    if ordem == 'decrescente':
+        clientes = Cliente.objects.filter(
+            nome__icontains=nome_da_pesquisa,
+        ).order_by(Lower('nome').desc())
 
     dados = {
         'clientes': clientes,
+        'nome_da_pesquisa': nome_da_pesquisa,
     }
 
     return render(request, 'listar_clientes.html', dados)
