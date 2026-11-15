@@ -1,0 +1,113 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title> Manutenção de Veículos </title>
+</head>
+<body>
+
+    {% include '_menu.html' %}
+
+    {% include '_mensagem.html' %}
+
+    <h1> Manutenção de Veículos </h1>
+
+    <div class="container-principal">
+
+        <a class="button nao-imprimir" href="{% url 'registrar_manutencao' %}">
+            Registrar manutenção
+        </a>
+
+        <h2> Em andamento </h2>
+
+        <table class="tabela" border="">
+
+            <thead>
+                <tr>
+                    <th>Veículo</th>
+                    <th>Tipo</th>
+                    <th>Motivo</th>
+                    <th>Início</th>
+                    <th>Previsão de conclusão</th>
+                    <th class="nao-imprimir">Ações</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for manutencao in em_andamento %}
+
+                <tr>
+                    <td> {{ manutencao.veiculo }} </td>
+                    <td> {{ manutencao.get_tipo_display }} </td>
+                    <td> {{ manutencao.motivo }} </td>
+                    <td> {{ manutencao.data_inicio|date:"d/m/Y" }} </td>
+                    <td> {{ manutencao.previsao_conclusao|date:"d/m/Y" }} </td>
+                    <td class="nao-imprimir">
+                        <form method="post" action="{% url 'concluir_manutencao' manutencao.id %}">
+                            {% csrf_token %}
+                            <button class="button" type="submit">Concluir</button>
+                        </form>
+                    </td>
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="6"> Nenhum veículo em manutenção. </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        <h2> Concluídas </h2>
+
+        <table class="tabela" border="">
+
+            <thead>
+                <tr>
+                    <th>Veículo</th>
+                    <th>Tipo</th>
+                    <th>Motivo</th>
+                    <th>Início</th>
+                    <th>Previsão de conclusão</th>
+                    <th>Conclusão</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for manutencao in concluidas %}
+
+                <tr>
+                    <td> {{ manutencao.veiculo }} </td>
+                    <td> {{ manutencao.get_tipo_display }} </td>
+                    <td> {{ manutencao.motivo }} </td>
+                    <td> {{ manutencao.data_inicio|date:"d/m/Y" }} </td>
+                    <td> {{ manutencao.previsao_conclusao|date:"d/m/Y" }} </td>
+                    <td> {{ manutencao.data_conclusao|date:"d/m/Y" }} </td>
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="6"> Nenhuma manutenção concluída. </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</body>
+</html>

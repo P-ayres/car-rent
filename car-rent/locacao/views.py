@@ -6,9 +6,17 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Q
 from django.db.models.functions import Lower
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 from functools import wraps
-from .forms import ClienteForm, FuncionarioForm, VeiculoForm
-from .models import Cliente, Funcionario, Veiculo
+from .forms import (
+    ClienteForm,
+    FuncionarioForm,
+    ManutencaoForm,
+    TarifaForm,
+    VeiculoForm,
+)
+from .models import Cliente, Funcionario, Manutencao, Veiculo
 
 # Create your views here.
 
@@ -397,3 +405,97 @@ def excluir_cliente(request, id):
     messages.success(request, mensagem)
 
     return redirect('listar_clientes')
+
+
+@admin_required
+def listar_manutencoes(request):
+
+    manutencoes = Manutencao.objects.select_related('veiculo')
+
+    dados = {
+        'em_andamento': manutencoes.filter(
+            data_conclusao__isnull=True).order_by('previsao_conclusao'),
+        'concluidas': manutencoes.filter(
+            data_conclusao__isnull=False).order_by('-data_conclusao'),
+    }
+
+    return render(request, 'listar_manutencoes.html', dados)
+
+
+@admin_required
+def registrar_manutencao(request):
+    form = ManutencaoForm()
+
+    if request.method == 'POST':
+        form = ManutencaoForm(request.POST)
+
+        if form.is_valid():
+            with transaction.atomic():
+                manutencao = form.save()
+                veiculo = manutencao.veiculo
+                veiculo.status = 'M'
+                veiculo.save(update_fields=['status'])
+
+            messages.success(
+                request,
+                f'Veículo {veiculo} enviado para manutenção.',
+            )
+
+            return redirect('listar_manutencoes')
+
+    dados = {
+        'formulario': form
+    }
+
+    return render(request, 'registrar_manutencao.html', dados)
+
+
+@admin_required
+@require_POST
+def concluir_manutencao(request, id):
+
+    with transaction.atomic():
+        manutencao = get_object_or_404(
+            Manutencao.objects.select_for_update().select_related('veiculo'),
+            id=id,
+        )
+
+        if manutencao.data_conclusao:
+            messages.error(request, 'Esta manutenção já foi concluída.')
+            return redirect('listar_manutencoes')
+
+        manutencao.data_conclusao = timezone.now()
+        manutencao.save(update_fields=['data_conclusao'])
+
+        veiculo = manutencao.veiculo
+        veiculo.status = 'D'
+        veiculo.save(update_fields=['status'])
+
+    messages.success(
+        request,
+        f'Manutenção concluída. Veículo {veiculo} disponível novamente.',
+    )
+
+    return redirect('listar_manutencoes')
+
+
+@admin_required
+def configurar_tarifas(request):
+    form = TarifaForm()
+
+    if request.method == 'POST':
+        form = TarifaForm(request.POST)
+
+        if form.is_valid():
+            with transaction.atomic():
+                form.save()
+
+            messages.success(request, 'Tarifas salvas com sucesso!')
+
+            return redirect('configurar_tarifas')
+
+    dados = {
+        'formulario': form
+    }
+
+    return render(request, 'configurar_tarifas.html', dados)

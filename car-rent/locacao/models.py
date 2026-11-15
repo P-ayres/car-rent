@@ -18,6 +18,11 @@ CATEGORIA_CHOICES = [
     ('L', 'Luxo'),
 ]
 
+TIPO_MANUTENCAO_CHOICES = [
+    ('P', 'Preventiva'),
+    ('C', 'Corretiva'),
+]
+
 STATUS_CHOICES = [
     ('D', 'Disponível'),
     ('I', 'Indisponível'),
@@ -82,3 +87,28 @@ class Cliente(models.Model):
         self.sobrenome = self.sobrenome.title()
 
         super().save(*args, **kwargs)
+
+
+class Manutencao(models.Model):
+    veiculo = models.ForeignKey(
+        Veiculo,
+        on_delete=models.CASCADE,
+        related_name='manutencoes',
+    )
+    tipo = models.CharField(max_length=1, choices=TIPO_MANUTENCAO_CHOICES)
+    motivo = models.CharField(max_length=200)
+    previsao_conclusao = models.DateField()
+    data_inicio = models.DateTimeField(auto_now_add=True)
+    data_conclusao = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.get_tipo_display()} - {self.veiculo}"
+
+
+class Tarifa(models.Model):
+    categoria = models.CharField(
+        max_length=1, choices=CATEGORIA_CHOICES, unique=True)
+    valor_diaria = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.get_categoria_display()}: R$ {self.valor_diaria}/dia"
