@@ -82,3 +82,21 @@ class Cliente(models.Model):
         self.sobrenome = self.sobrenome.title()
 
         super().save(*args, **kwargs)
+
+
+class Reserva(models.Model):
+    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    veiculo = models.ForeignKey(Veiculo, on_delete=models.CASCADE)
+    data_inicio = models.DateTimeField()
+    data_fim = models.DateTimeField()
+    data_cadastro = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reservas',
+    )
+
+    def __str__(self):
+        return f"Reserva de {self.cliente} - {self.veiculo} ({self.data_inicio} a {self.data_fim})"

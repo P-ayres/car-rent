@@ -7,8 +7,8 @@ from django.db import transaction
 from django.db.models import Q
 from django.db.models.functions import Lower
 from functools import wraps
-from .forms import ClienteForm, FuncionarioForm, VeiculoForm
-from .models import Cliente, Funcionario, Veiculo
+from .forms import ClienteForm, FuncionarioForm, ReservaForm, VeiculoForm
+from .models import Cliente, Funcionario, Reserva, Veiculo
 
 # Create your views here.
 
@@ -307,7 +307,8 @@ def excluir_veiculo(request, id):
     return redirect('listar_veiculos')
 
 
-@admin_required
+# @admin_required
+@login_required
 def cadastrar_cliente(request):
     form = ClienteForm()
 
@@ -322,7 +323,8 @@ def cadastrar_cliente(request):
                 f'Cliente {cliente.nome} cadastrado com sucesso!',
             )
 
-            return redirect('listar_clientes')
+            # return redirect('listar_clientes')
+            return redirect('home')
 
     dados = {
         'formulario': form
@@ -397,3 +399,84 @@ def excluir_cliente(request, id):
     messages.success(request, mensagem)
 
     return redirect('listar_clientes')
+
+
+@login_required
+def reservar_veiculo(request):
+    form = ReservaForm()
+
+    veiculos = Veiculo.objects.filter(status='D')
+
+    if request.method == 'POST':
+        form = ReservaForm(request.POST)
+
+        if form.is_valid():
+            reserva = form.save()
+
+            messages.success(
+                request,
+                f'Reserva de {reserva.cliente} para {reserva.veiculo} cadastrada com sucesso!',
+            )
+            reserva.veiculo.status = 'R'
+            reserva.veiculo.save()
+            return redirect('listar_reservas')
+
+    dados = {
+        'formulario': form,
+        'veiculos': veiculos
+    }
+
+    return render(request, 'reservar_veiculo.html', dados)
+
+
+@login_required
+def listar_reservas(request):
+    reservas = Reserva.objects.all()
+    dados = {
+        'reservas': reservas
+    }
+    return render(request, 'listar_reservas.html', dados)
+
+
+@login_required
+def editar_reserva(request, id):
+
+    reserva = get_object_or_404(Reserva, id=id)
+
+    form = ReservaForm(instance=reserva)
+
+    if request.method == 'POST':
+        form = ReservaForm(request.POST, instance=reserva)
+
+        if form.is_valid():
+            reserva = form.save()
+
+            messages.success(
+                request,
+                f'Reserva de {reserva.cliente} para {reserva.veiculo} alterada com sucesso!',
+            )
+
+            return redirect('listar_reservas')
+
+    dados = {
+        'formulario': form
+    }
+
+    return render(request, 'editar_reserva.html', dados)
+
+
+@login_required
+def cancelar_reserva(request, id):
+
+    reserva = get_object_or_404(Reserva, id=id)
+    reserva.veiculo.status = 'D'
+    reserva.veiculo.save()
+
+    reserva.delete()
+
+    messages.success(
+        request,
+        f'Reserva de {reserva.cliente} para {reserva.veiculo} cancelada com sucesso!',
+    )
+
+    return redirect('listar_reservas')
