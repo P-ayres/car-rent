@@ -47,8 +47,8 @@
                         {% endif %}
                     </td>
                     <td> 
-                        <a href="{% url 'excluir_funcionario' funcionario.id %}"> Excluir </a> | 
-                        <a href="{% url 'ativar_funcionario' funcionario.id %} "> Ativar </a> 
+                        <a href="{% url 'excluir_funcionario' funcionario.id %} " onclick="return confirm('Tem certeza que deseja excluir este funcionário?');"> Excluir </a> | 
+                        <a href="{% url 'ativar_funcionario' funcionario.id %} " onclick="return confirm('Tem certeza que deseja ativar este funcionário?');"> Ativar </a> 
                     </td>
                 </tr>
 

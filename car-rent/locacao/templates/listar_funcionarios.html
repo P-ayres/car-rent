@@ -54,8 +54,8 @@
 
                     <td class="nao-imprimir"> 
                         <a href="{% url 'editar_funcionario' funcionario.id %}"> Editar </a> |
-                        <a href="{% url 'excluir_funcionario' funcionario.id %}"> Excluir </a> |
-                        <a href="{% url 'desativar_funcionario' funcionario.id %}"> Desativar </a>
+                        <a href="{% url 'excluir_funcionario' funcionario.id %}" onclick="return confirm('Tem certeza que deseja excluir este funcionário?');"> Excluir </a> |
+                        <a href="{% url 'desativar_funcionario' funcionario.id %}" onclick="return confirm('Tem certeza que deseja desativar este funcionário?');"> Desativar </a>
                     </td>
                 </tr>
 

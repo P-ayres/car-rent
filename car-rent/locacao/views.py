@@ -410,8 +410,14 @@ def excluir_cliente(request, id):
 
     cliente = get_object_or_404(Cliente, id=id)
 
-    # TODO: quando o model de Reserva existir, bloquear a exclusão se o
-    # cliente tiver reservas ativas (requisito do caso de uso).
+    reservas_ativas = Reserva.objects.filter(
+        cliente=cliente, veiculo__status='R')
+    if reservas_ativas.exists():
+        messages.error(
+            request,
+            f'Não é possível excluir o cliente {cliente.nome} {cliente.sobrenome} pois ele possui reservas ativas.'
+        )
+        return redirect('listar_clientes')
 
     nome = cliente.nome
     sobrenome = cliente.sobrenome
@@ -469,7 +475,8 @@ def listar_reservas(request):
 
     ordenacao = [Lower('cliente__nome'), Lower('cliente__sobrenome')]
     if ordem == 'decrescente':
-        ordenacao = [Lower('cliente__nome').desc(), Lower('cliente__sobrenome').desc()]
+        ordenacao = [Lower('cliente__nome').desc(),
+                     Lower('cliente__sobrenome').desc()]
 
     reservas = reservas.order_by(*ordenacao)
 
