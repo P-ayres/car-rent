@@ -23,6 +23,12 @@ from .models import CATEGORIA_CHOICES, STATUS_CHOICES, Cliente, Funcionario, Man
 User = get_user_model()
 
 
+def formatar_valor(valor):
+    """Formata um Decimal como moeda brasileira: 1234.5 -> 'R$ 1.234,50'."""
+    texto = f'{valor:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+    return f'R$ {texto}'
+
+
 def admin_required(view_func):
     @wraps(view_func)
     @login_required
@@ -432,7 +438,9 @@ def reservar_veiculo(request):
 
             messages.success(
                 request,
-                f'Reserva de {reserva.cliente} para {reserva.veiculo} cadastrada com sucesso!',
+                f'Reserva de {reserva.cliente} para {reserva.veiculo} cadastrada com sucesso! '
+                f'Valor total: {formatar_valor(reserva.valor_total)} '
+                f'({reserva.quantidade_dias} diária(s)).',
             )
             reserva.veiculo.status = 'R'
             reserva.veiculo.save()
@@ -487,7 +495,9 @@ def editar_reserva(request, id):
 
             messages.success(
                 request,
-                f'Reserva de {reserva.cliente} para {reserva.veiculo} alterada com sucesso!',
+                f'Reserva de {reserva.cliente} para {reserva.veiculo} alterada com sucesso! '
+                f'Valor total: {formatar_valor(reserva.valor_total)} '
+                f'({reserva.quantidade_dias} diária(s)).',
             )
 
             return redirect('listar_reservas')
