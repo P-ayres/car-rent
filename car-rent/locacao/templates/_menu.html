@@ -25,20 +25,6 @@
             </div>
 
             <div class="dropdown">
-                <span class="summary">Clientes</span>
-
-                <div class="dropdown-content">
-                    <a href="{% url 'cadastrar_cliente' %}">
-                        Cadastrar cliente
-                    </a>
-
-                    <a href="{% url 'listar_clientes' %}">
-                        Listar clientes
-                    </a>
-                </div>
-            </div>
-
-            <div class="dropdown">
                 <span class="summary">Veículos</span>
 
                 <div class="dropdown-content">
@@ -52,7 +38,7 @@
                 </div>
             </div>
 
-        {% elif user.is_authenticated %}
+        {% endif %}
             <div class="dropdown">
                 <span class="summary">Reservas</span>
 
@@ -68,9 +54,22 @@
                     </a> 
                 </div>
             </div>
-        {% endif %}
-    </div>
 
+            <div class="dropdown">
+                <span class="summary">Clientes</span>
+
+                <div class="dropdown-content">
+                    <a href="{% url 'cadastrar_cliente' %}">
+                        Cadastrar cliente
+                    </a>
+
+                    <a href="{% url 'listar_clientes' %}">
+                        Listar clientes
+                    </a>
+                </div>
+            </div>
+    </div>
+    
     <div class="usuario-menu">
         {% if user.is_authenticated %}
             <span class="nao-imprimir">

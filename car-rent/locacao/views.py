@@ -318,7 +318,6 @@ def excluir_veiculo(request, id):
     return redirect('listar_veiculos')
 
 
-# @admin_required
 @login_required
 def cadastrar_cliente(request):
     form = ClienteForm()
@@ -334,8 +333,7 @@ def cadastrar_cliente(request):
                 f'Cliente {cliente.nome} cadastrado com sucesso!',
             )
 
-            # return redirect('listar_clientes')
-            return redirect('home')
+            return redirect('listar_clientes')
 
     dados = {
         'formulario': form
@@ -344,7 +342,7 @@ def cadastrar_cliente(request):
     return render(request, 'cadastrar_cliente.html', dados)
 
 
-@admin_required
+@login_required
 def listar_clientes(request):
     ordem = request.GET.get('ordem')
     nome_da_pesquisa = request.GET.get('nome_da_pesquisa', '')
@@ -366,7 +364,7 @@ def listar_clientes(request):
     return render(request, 'listar_clientes.html', dados)
 
 
-@admin_required
+@login_required
 def editar_cliente(request, id):
 
     cliente = get_object_or_404(Cliente, id=id)
@@ -393,7 +391,7 @@ def editar_cliente(request, id):
     return render(request, 'editar_cliente.html', dados)
 
 
-@admin_required
+@login_required
 def excluir_cliente(request, id):
 
     cliente = get_object_or_404(Cliente, id=id)
