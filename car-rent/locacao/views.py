@@ -450,9 +450,26 @@ def reservar_veiculo(request):
 
 @login_required
 def listar_reservas(request):
-    reservas = Reserva.objects.all()
+    ordem = request.GET.get('ordem')
+    nome_da_pesquisa = request.GET.get('nome_da_pesquisa', '')
+
+    reservas = Reserva.objects.select_related('cliente', 'veiculo')
+
+    if nome_da_pesquisa:
+        reservas = reservas.filter(
+            Q(cliente__nome__icontains=nome_da_pesquisa)
+            | Q(veiculo__placa__icontains=nome_da_pesquisa)
+        )
+
+    ordenacao = [Lower('cliente__nome'), Lower('cliente__sobrenome')]
+    if ordem == 'decrescente':
+        ordenacao = [Lower('cliente__nome').desc(), Lower('cliente__sobrenome').desc()]
+
+    reservas = reservas.order_by(*ordenacao)
+
     dados = {
-        'reservas': reservas
+        'reservas': reservas,
+        'nome_da_pesquisa': nome_da_pesquisa,
     }
     return render(request, 'listar_reservas.html', dados)
 

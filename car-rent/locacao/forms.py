@@ -245,6 +245,10 @@ class ReservaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['veiculo'].queryset = Veiculo.objects.filter(status='D')
+        self.fields['veiculo'].label_from_instance = lambda obj: f'{obj.modelo} - {obj.placa}'
+        if self.instance.pk:
+            self.fields['veiculo'].queryset = Veiculo.objects.filter(
+                status='D') | Veiculo.objects.filter(pk=self.instance.veiculo.pk)
 
     def clean(self):
         cleaned_data = super().clean()
