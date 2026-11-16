@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.conf import settings
 from django.db import models
 
@@ -103,8 +105,36 @@ class Reserva(models.Model):
         related_name='reservas',
     )
 
+    valor_locacao = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0)
+    valor_diaria = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0)
+    valor_total = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0)
+
     def __str__(self):
         return f"Reserva de {self.cliente} - {self.veiculo} ({self.data_inicio} a {self.data_fim})"
+
+    @staticmethod
+    def calcular_dias(data_inicio, data_fim):
+
+        periodo = data_fim - data_inicio
+        dias = periodo.days
+        if periodo % timedelta(days=1):
+            dias += 1
+        return max(dias, 1)
+
+    @property
+    def quantidade_dias(self):
+        return self.calcular_dias(self.data_inicio, self.data_fim)
+
+    def calcular_valor(self):
+
+        tarifa = Tarifa.objects.get(categoria=self.veiculo.categoria)
+        self.valor_locacao = self.veiculo.preco_locacao
+        self.valor_diaria = tarifa.valor_diaria
+        self.valor_total = self.valor_locacao + \
+            self.valor_diaria * self.quantidade_dias
 
 
 class Manutencao(models.Model):

@@ -248,16 +248,42 @@ class ReservaForm(forms.ModelForm):
         self.fields['veiculo'].label_from_instance = lambda obj: f'{obj.modelo} - {obj.placa}'
         if self.instance.pk:
             self.fields['veiculo'].queryset = Veiculo.objects.filter(
-                status='D') | Veiculo.objects.filter(pk=self.instance.veiculo.pk)
+                pk=self.instance.veiculo_id)
+            self.fields['veiculo'].disabled = True
+            self.fields['cliente'].disabled = True
+
+    CAMPOS_DO_VALOR = {'data_inicio', 'data_fim'}
+
+    def precisa_calcular_valor(self):
+        return (not self.instance.pk
+                or bool(self.CAMPOS_DO_VALOR & set(self.changed_data)))
 
     def clean(self):
         cleaned_data = super().clean()
         data_inicio = cleaned_data.get('data_inicio')
         data_fim = cleaned_data.get('data_fim')
-        if data_inicio and data_fim and data_inicio > data_fim:
+        if data_inicio and data_fim and data_inicio >= data_fim:
             raise forms.ValidationError(
                 'A data de retirada deve ser anterior à data de devolução.')
+
+        veiculo = cleaned_data.get('veiculo')
+        if (veiculo and self.precisa_calcular_valor()
+                and not Tarifa.objects.filter(categoria=veiculo.categoria).exists()):
+            self.add_error(
+                'veiculo',
+                f'Não há tarifa cadastrada para a categoria '
+                f'{veiculo.get_categoria_display()}. '
+                f'Configure as tarifas antes de reservar este veículo.',
+            )
         return cleaned_data
+
+    def save(self, commit=True):
+        reserva = super().save(commit=False)
+        if self.precisa_calcular_valor():
+            reserva.calcular_valor()
+        if commit:
+            reserva.save()
+        return reserva
 
 
 class ManutencaoForm(forms.ModelForm):
