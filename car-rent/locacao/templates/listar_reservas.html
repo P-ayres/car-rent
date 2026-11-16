@@ -42,8 +42,8 @@
                     <td> {{ reserva.data_fim }} </td>
                     <td> {{ reserva.data_cadastro }} </td>
                     <td>
-                        <a href="{% url 'editar_reserva' reserva.id %}">Editar</a>
-                        <a href="{% url 'cancelar_reserva' reserva.id %}">Cancelar</a>
+                        <a href="{% url 'editar_reserva' reserva.id %}">Editar</a> | 
+                        <a href="{% url 'cancelar_reserva' reserva.id %}" onclick="return confirm('Tem certeza que deseja cancelar esta reserva?');">Cancelar</a>
                     </td>
                 </tr>
 
