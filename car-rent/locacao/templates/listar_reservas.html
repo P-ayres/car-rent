@@ -1,0 +1,59 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href=" {% static "css/styles.css" %}">
+    <title> Listar Reservas </title>
+</head>
+<body>
+
+    {% include '_menu.html' %}
+    <h1> Lista de Reservas </h1>
+
+    <div class="lista-funcionario container-principal">
+        <div class="form-pesquisa nao-imprimir">
+            <form method="GET"> 
+                <input class="input" type="text" name="nome_da_pesquisa" placeholder="Pesquisa por cliente/placa" value='{{ nome_da_pesquisa }}'> 
+                <button class="button pesquisar" type="submit">Pesquisar</button> 
+            </form>
+        </div>
+        <table class="tabela" border="">
+            <thead>
+                <tr>
+                    <th>Cliente  <a href="?ordem=crescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↑ </a>  <a href="?ordem=decrescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↓ </a>  </th>
+                    <th>Veiculo</th>
+                    <th>Data de retirada</th>
+                    <th>Data de devolução</th>
+                    <th>Data de cadastro</th>
+                    <th>Editar</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                
+                {% for reserva in reservas %}
+                <tr>
+                    <td> {{ reserva.cliente }} </td>
+                    <td> {{ reserva.veiculo }} </td>
+                    <td> {{ reserva.data_inicio }} </td>
+                    <td> {{ reserva.data_fim }} </td>
+                    <td> {{ reserva.data_cadastro }} </td>
+                    <td>
+                        <a href="{% url 'editar_reserva' reserva.id %}">Editar</a> | 
+                        <a href="{% url 'cancelar_reserva' reserva.id %}" onclick="return confirm('Tem certeza que deseja cancelar esta reserva?');">Cancelar</a>
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+    </div>
+</body>
+</html>
+
+    

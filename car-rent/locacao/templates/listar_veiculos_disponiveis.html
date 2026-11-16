@@ -1,0 +1,83 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href=" {% static "css/styles.css" %}">
+    <title> Listar Veículos </title>
+</head>
+<body>
+
+    {% include '_menu.html' %}
+
+    <h1> Veículos Disponíveis </h1>
+    
+    <div class="lista-veiculo container-principal">
+        <div class="form-pesquisa nao-imprimir">
+            <form method="GET">
+                <label for="modelo">Modelo</label>
+                <input id="modelo" type="text" name="nome_da_pesquisa" placeholder="Pesquisar modelo" value="{{ nome_da_pesquisa }}">
+                
+                <label for="categoria">Categoria</label>
+                <select id="categoria" name="categoria_pesquisa">
+                    <option value="">Todas as categorias</option>
+                    {% for valor, nome in categorias %}
+                    <option value="{{ valor }}" {% if categoria_pesquisa == valor %}selected{% endif %}>{{ nome }}</option>
+                    {% endfor %}
+                </select>
+                
+                <label for="status">Status</label>
+                <select id="status" name="status_pesquisa">
+                    <option value="">Todos os status</option>
+                    {% for valor, nome in status_opcoes %}
+                    <option value="{{ valor }}" {% if status_pesquisa == valor %}selected{% endif %}>{{ nome }}</option>
+                    {% endfor %}
+                </select>
+                
+                {% if ordem %}
+                <input type="hidden" name="ordem" value="{{ ordem }}">
+                {% endif %}
+                <button class="button pesquisar" type="submit">Pesquisar</button> 
+            </form>
+        </div>
+        <table class="tabela" border="">
+
+            <thead>
+                <tr>
+                    <th>Modelo  <a href="?ordem=crescente&{{ parametros_filtro }}"> ↑ </a>  <a href="?ordem=decrescente&{{ parametros_filtro }}"> ↓ </a>  </th>
+                    <th>Placa</th>
+                    <th>Categoria</th>
+                    <th>Marca</th>
+                    <th>Status</th>
+                    <th>Preço de Locação</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                
+                {% for veiculo in veiculos %}
+
+                <tr>
+                    <td> {{ veiculo.modelo }} </td>
+                    <td> {{ veiculo.placa }} </td>
+                    <td> {{ veiculo.get_categoria_display }} </td>
+                    <td> {{ veiculo.marca }} </td>
+                    <td> {{ veiculo.get_status_display }} </td>
+                    <td> {{ veiculo.preco_locacao }} </td>
+                </tr>
+
+                {% empty %}
+                    <tr>
+                        <td colspan="6">Nenhum veículo encontrado.</td>
+                    </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+
+    

@@ -13,6 +13,7 @@ from .models import (
     Manutencao,
     Tarifa,
     Veiculo,
+    Reserva,
 )
 
 User = get_user_model()
@@ -204,6 +205,58 @@ class ClienteForm(forms.ModelForm):
         cleaned_data = super().clean()
         if not cleaned_data.get('cpf') and not cleaned_data.get('cnpj'):
             raise forms.ValidationError('Informe o CPF ou o CNPJ do cliente.')
+        return cleaned_data
+
+
+class ReservaForm(forms.ModelForm):
+    class Meta:
+        model = Reserva
+        fields = [
+            'cliente',
+            'veiculo',
+            'data_inicio',
+            'data_fim',
+        ]
+
+        labels = {
+            'data_inicio': 'Data de retirada',
+            'data_fim': 'Data de devolução',
+        }
+
+        widgets = {
+            'cliente': forms.Select(attrs={
+                'class': 'form-select',
+                'placeholder': 'Selecione o cliente'
+            }),
+            'veiculo': forms.Select(attrs={
+                'class': 'form-select',
+                'placeholder': 'Selecione o veículo'
+            }),
+            'data_inicio': forms.DateInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'dd/mm/aaaa'
+            }),
+            'data_fim': forms.DateInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'dd/mm/aaaa'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['veiculo'].queryset = Veiculo.objects.filter(status='D')
+        self.fields['veiculo'].label_from_instance = lambda obj: f'{obj.modelo} - {obj.placa}'
+        if self.instance.pk:
+            self.fields['veiculo'].queryset = Veiculo.objects.filter(
+                status='D') | Veiculo.objects.filter(pk=self.instance.veiculo.pk)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        data_inicio = cleaned_data.get('data_inicio')
+        data_fim = cleaned_data.get('data_fim')
+        if data_inicio and data_fim and data_inicio > data_fim:
+            raise forms.ValidationError(
+                'A data de retirada deve ser anterior à data de devolução.')
         return cleaned_data
 
 
