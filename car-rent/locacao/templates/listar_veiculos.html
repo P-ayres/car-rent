@@ -22,8 +22,29 @@
     
     <div class="lista-veiculo container-principal">
         <div class="form-pesquisa nao-imprimir">
-            <form method="GET"> 
-                <input type="text" name="nome_da_pesquisa" placeholder="Pesquisar veículo" value='{{ nome_da_pesquisa }}'> 
+            <form method="GET">
+                <label for="modelo">Modelo</label>
+                <input id="modelo" type="text" name="nome_da_pesquisa" placeholder="Pesquisar modelo" value="{{ nome_da_pesquisa }}">
+                
+                <label for="categoria">Categoria</label>
+                <select id="categoria" name="categoria_pesquisa">
+                    <option value="">Todas as categorias</option>
+                    {% for valor, nome in categorias %}
+                    <option value="{{ valor }}" {% if categoria_pesquisa == valor %}selected{% endif %}>{{ nome }}</option>
+                    {% endfor %}
+                </select>
+                
+                <label for="status">Status</label>
+                <select id="status" name="status_pesquisa">
+                    <option value="">Todos os status</option>
+                    {% for valor, nome in status_opcoes %}
+                    <option value="{{ valor }}" {% if status_pesquisa == valor %}selected{% endif %}>{{ nome }}</option>
+                    {% endfor %}
+                </select>
+                
+                {% if ordem %}
+                <input type="hidden" name="ordem" value="{{ ordem }}">
+                {% endif %}
                 <button class="button pesquisar" type="submit">Pesquisar</button> 
             </form>
         </div>
@@ -48,14 +69,14 @@
                 <tr>
                     <td> {{ veiculo.modelo }} </td>
                     <td> {{ veiculo.placa }} </td>
-                    <td> {{ veiculo.categoria }} </td>
-                    <td> {{ veiculo.status }} </td>
+                    <td> {{ veiculo.get_categoria_display }} </td>
+                    <td> {{ veiculo.get_status_display }} </td>
                     <td> {{ veiculo.preco_locacao }} </td>
                     <td> {{ veiculo.marca }} </td>
 
                     <td class="nao-imprimir"> 
                         <a href="{% url 'editar_veiculo' veiculo.id %}"> Editar </a> |
-                        <a href="{% url 'excluir_veiculo' veiculo.id %}"> Remover </a> |
+                        <a href="{% url 'excluir_veiculo' veiculo.id %}"> Remover </a>
                     </td>
                 </tr>
 

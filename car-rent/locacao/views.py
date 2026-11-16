@@ -14,9 +14,9 @@ from .forms import (
     FuncionarioForm,
     ManutencaoForm,
     TarifaForm,
-    VeiculoForm,
+    ReservaForm, VeiculoForm,
 )
-from .models import Cliente, Funcionario, Manutencao, Veiculo
+from .models import CATEGORIA_CHOICES, STATUS_CHOICES, Cliente, Funcionario, Manutencao, Reserva, Veiculo
 
 # Create your views here.
 
@@ -245,22 +245,33 @@ def cadastrar_veiculo(request):
 
 @admin_required
 def listar_veiculos(request):
-
     ordem = request.GET.get('ordem')
     nome_da_pesquisa = request.GET.get('nome_da_pesquisa', '')
+    categoria_pesquisa = request.GET.get('categoria_pesquisa', '')
+    status_pesquisa = request.GET.get('status_pesquisa', '')
 
     veiculos = Veiculo.objects.filter(
         modelo__icontains=nome_da_pesquisa,
+        categoria__icontains=categoria_pesquisa,
+        status__icontains=status_pesquisa,
     ).order_by(Lower('modelo'))
 
     if ordem == 'decrescente':
         veiculos = Veiculo.objects.filter(
             modelo__icontains=nome_da_pesquisa,
+            categoria__icontains=categoria_pesquisa,
+            status__icontains=status_pesquisa,
         ).order_by(Lower('modelo').desc())
 
     dados = {
         'veiculos': veiculos,
         'nome_da_pesquisa': nome_da_pesquisa,
+        'categoria_pesquisa': categoria_pesquisa,
+        'status_pesquisa': status_pesquisa,
+        'categorias': CATEGORIA_CHOICES,
+        'status_opcoes': STATUS_CHOICES,
+        'ordem': ordem,
+        'parametros_filtro': request.GET.urlencode(),
     }
 
     return render(request, 'listar_veiculos.html', dados)
@@ -315,7 +326,8 @@ def excluir_veiculo(request, id):
     return redirect('listar_veiculos')
 
 
-@admin_required
+# @admin_required
+@login_required
 def cadastrar_cliente(request):
     form = ClienteForm()
 
@@ -330,7 +342,8 @@ def cadastrar_cliente(request):
                 f'Cliente {cliente.nome} cadastrado com sucesso!',
             )
 
-            return redirect('listar_clientes')
+            # return redirect('listar_clientes')
+            return redirect('home')
 
     dados = {
         'formulario': form
@@ -405,6 +418,121 @@ def excluir_cliente(request, id):
     messages.success(request, mensagem)
 
     return redirect('listar_clientes')
+
+
+@login_required
+def reservar_veiculo(request):
+    form = ReservaForm()
+
+    veiculos = Veiculo.objects.filter(status='D')
+
+    if request.method == 'POST':
+        form = ReservaForm(request.POST)
+
+        if form.is_valid():
+            reserva = form.save()
+
+            messages.success(
+                request,
+                f'Reserva de {reserva.cliente} para {reserva.veiculo} cadastrada com sucesso!',
+            )
+            reserva.veiculo.status = 'R'
+            reserva.veiculo.save()
+            return redirect('listar_reservas')
+
+    dados = {
+        'formulario': form,
+        'veiculos': veiculos
+    }
+
+    return render(request, 'reservar_veiculo.html', dados)
+
+
+@login_required
+def listar_reservas(request):
+    reservas = Reserva.objects.all()
+    dados = {
+        'reservas': reservas
+    }
+    return render(request, 'listar_reservas.html', dados)
+
+
+@login_required
+def editar_reserva(request, id):
+
+    reserva = get_object_or_404(Reserva, id=id)
+
+    form = ReservaForm(instance=reserva)
+
+    if request.method == 'POST':
+        form = ReservaForm(request.POST, instance=reserva)
+
+        if form.is_valid():
+            reserva = form.save()
+
+            messages.success(
+                request,
+                f'Reserva de {reserva.cliente} para {reserva.veiculo} alterada com sucesso!',
+            )
+
+            return redirect('listar_reservas')
+
+    dados = {
+        'formulario': form
+    }
+
+    return render(request, 'editar_reserva.html', dados)
+
+
+@login_required
+def cancelar_reserva(request, id):
+
+    reserva = get_object_or_404(Reserva, id=id)
+    reserva.veiculo.status = 'D'
+    reserva.veiculo.save()
+
+    reserva.delete()
+
+    messages.success(
+        request,
+        f'Reserva de {reserva.cliente} para {reserva.veiculo} cancelada com sucesso!',
+    )
+
+    return redirect('listar_reservas')
+
+
+@login_required
+def listar_veiculos_disponiveis(request):
+    ordem = request.GET.get('ordem')
+    nome_da_pesquisa = request.GET.get('nome_da_pesquisa', '')
+    categoria_pesquisa = request.GET.get('categoria_pesquisa', '')
+    status_pesquisa = request.GET.get('status_pesquisa', 'D')
+
+    veiculos = Veiculo.objects.filter(
+        modelo__icontains=nome_da_pesquisa,
+        categoria__icontains=categoria_pesquisa,
+        status__icontains=status_pesquisa,
+    ).order_by(Lower('modelo'))
+
+    if ordem == 'decrescente':
+        veiculos = Veiculo.objects.filter(
+            modelo__icontains=nome_da_pesquisa,
+            categoria__icontains=categoria_pesquisa,
+            status__icontains=status_pesquisa,
+        ).order_by(Lower('modelo').desc())
+
+    dados = {
+        'veiculos': veiculos,
+        'nome_da_pesquisa': nome_da_pesquisa,
+        'categoria_pesquisa': categoria_pesquisa,
+        'status_pesquisa': status_pesquisa,
+        'categorias': CATEGORIA_CHOICES,
+        'status_opcoes': STATUS_CHOICES,
+        'ordem': ordem,
+        'parametros_filtro': request.GET.urlencode(),
+    }
+
+    return render(request, 'listar_veiculos_disponiveis.html', dados)
 
 
 @admin_required

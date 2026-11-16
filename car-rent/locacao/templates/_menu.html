@@ -60,6 +60,22 @@
                 </div>
             </div>
 
+        {% elif user.is_authenticated %}
+            <div class="dropdown">
+                <span class="summary">Reservas</span>
+
+                <div class="dropdown-content">
+                    <a href="{% url 'reservar_veiculo' %}">
+                        Reservar veículo
+                    </a> 
+                    <a href="{% url 'listar_reservas' %}">
+                        Listar reservas
+                    </a> 
+                    <a href="{% url 'listar_veiculos_disponiveis' %}">
+                        Consultar Disponibilidade
+                    </a> 
+                </div>
+            </div>
         {% endif %}
     </div>
 
