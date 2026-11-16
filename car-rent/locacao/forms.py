@@ -1,8 +1,19 @@
+from decimal import Decimal
+
 from django import forms
 from django.contrib.auth import get_user_model, password_validation
 from django.core.exceptions import ValidationError
+from django.db.models.functions import Lower
+from django.utils import timezone
 
-from .models import Cliente, Funcionario, Veiculo
+from .models import (
+    CATEGORIA_CHOICES,
+    Cliente,
+    Funcionario,
+    Manutencao,
+    Tarifa,
+    Veiculo,
+)
 
 User = get_user_model()
 
@@ -194,3 +205,79 @@ class ClienteForm(forms.ModelForm):
         if not cleaned_data.get('cpf') and not cleaned_data.get('cnpj'):
             raise forms.ValidationError('Informe o CPF ou o CNPJ do cliente.')
         return cleaned_data
+
+
+class ManutencaoForm(forms.ModelForm):
+    class Meta:
+        model = Manutencao
+        fields = [
+            'veiculo',
+            'tipo',
+            'motivo',
+            'previsao_conclusao',
+        ]
+        labels = {
+            'veiculo': 'Veículo',
+            'previsao_conclusao': 'Previsão de conclusão',
+        }
+        widgets = {
+            'veiculo': forms.Select(attrs={
+                'class': 'form-select',
+            }),
+            'tipo': forms.Select(attrs={
+                'class': 'form-select',
+            }),
+            'motivo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Digite o motivo da manutenção'
+            }),
+            'previsao_conclusao': forms.DateInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'dd/mm/aaaa'
+            }),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['veiculo'].queryset = Veiculo.objects.filter(
+            status='D').order_by(Lower('modelo'))
+
+    def clean_previsao_conclusao(self):
+        previsao = self.cleaned_data['previsao_conclusao']
+        if previsao < timezone.localdate():
+            raise forms.ValidationError(
+                'A previsão de conclusão não pode ser uma data passada.')
+        return previsao
+
+
+class TarifaForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        atuais = {t.categoria: t.valor_diaria for t in Tarifa.objects.all()}
+
+        for codigo, nome in CATEGORIA_CHOICES:
+            self.fields[f'categoria_{codigo}'] = forms.DecimalField(
+                label=nome,
+                max_digits=10,
+                decimal_places=2,
+                min_value=Decimal('0.01'),
+                initial=atuais.get(codigo),
+                widget=forms.NumberInput(attrs={
+                    'class': 'form-control',
+                    'step': '0.01',
+                    'placeholder': 'Valor da diária',
+                }),
+            )
+
+    def campos_por_classe(self):
+        for codigo, nome in CATEGORIA_CHOICES:
+            yield nome, self[f'categoria_{codigo}']
+
+    def save(self):
+        for codigo, _ in CATEGORIA_CHOICES:
+            Tarifa.objects.update_or_create(
+                categoria=codigo,
+                defaults={
+                    'valor_diaria': self.cleaned_data[f'categoria_{codigo}']},
+            )
