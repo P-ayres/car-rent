@@ -294,6 +294,7 @@ class ManutencaoForm(forms.ModelForm):
             'tipo',
             'motivo',
             'previsao_conclusao',
+            'custo',
         ]
         labels = {
             'veiculo': 'Veículo',
@@ -320,6 +321,8 @@ class ManutencaoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['veiculo'].queryset = Veiculo.objects.filter(
             status='D').order_by(Lower('modelo'))
+        if not self.instance.pk:
+            self.fields['custo'].widget = forms.HiddenInput()
 
     def clean_previsao_conclusao(self):
         previsao = self.cleaned_data['previsao_conclusao']

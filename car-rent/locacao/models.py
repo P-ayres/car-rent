@@ -30,6 +30,7 @@ STATUS_CHOICES = [
     ('I', 'Indisponível'),
     ('M', 'Em manutenção'),
     ('R', 'Reservado'),
+    ('P', 'Com problema'),
 ]
 
 
@@ -148,6 +149,7 @@ class Manutencao(models.Model):
     previsao_conclusao = models.DateField()
     data_inicio = models.DateTimeField(auto_now_add=True)
     data_conclusao = models.DateTimeField(null=True, blank=True)
+    custo = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     def __str__(self):
         return f"{self.get_tipo_display()} - {self.veiculo}"
