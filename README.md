@@ -20,7 +20,7 @@
 > - Gerenciamento de usuários com roles de admin e funcionarios
 > - Exportação de relátorios operacionais
 
-##Para rodar o projeto
+## Para rodar o projeto
 
 ```
 na pasta do projeto: uv sync
