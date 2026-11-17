@@ -490,7 +490,8 @@ def listar_reservas(request):
     ordem = request.GET.get('ordem')
     nome_da_pesquisa = request.GET.get('nome_da_pesquisa', '')
 
-    reservas = Reserva.objects.select_related('cliente', 'veiculo', 'devolucao')
+    reservas = Reserva.objects.select_related(
+        'cliente', 'veiculo', 'devolucao')
 
     if nome_da_pesquisa:
         reservas = reservas.filter(
@@ -514,35 +515,43 @@ def listar_reservas(request):
 
 @login_required
 def editar_reserva(request, id):
-
     reserva = get_object_or_404(Reserva, id=id)
     if reserva.status != 'P':
         messages.error(
             request, 'Somente reservas pendentes podem ser editadas.')
         return redirect('listar_reservas')
 
+    # O formulário pode trocar o veículo da instância durante a validação.
+    veiculo_anterior = reserva.veiculo
     form = ReservaForm(instance=reserva)
 
     if request.method == 'POST':
         form = ReservaForm(request.POST, instance=reserva)
 
         if form.is_valid():
-            reserva = form.save()
+            with transaction.atomic():
+                reserva = form.save()
+                trocou_veiculo = reserva.veiculo_id != veiculo_anterior.pk
 
-            messages.success(
-                request,
-                f'Reserva de {reserva.cliente} para {reserva.veiculo} alterada com sucesso! '
+                if trocou_veiculo:
+                    if veiculo_anterior.status == 'R':
+                        veiculo_anterior.status = 'D'
+                        veiculo_anterior.save(update_fields=['status'])
+
+                    reserva.veiculo.status = 'R'
+                    reserva.veiculo.save(update_fields=['status'])
+
+            mensagem = f'Reserva de {reserva.cliente} para {reserva.veiculo} alterada com sucesso! '
+            if trocou_veiculo:
+                mensagem += f'Veículo trocado (antes: {veiculo_anterior}). '
+            mensagem += (
                 f'Valor total: {formatar_valor(reserva.valor_total)} '
-                f'({reserva.quantidade_dias} diária(s)).',
+                f'({reserva.quantidade_dias} diária(s)).'
             )
-
+            messages.success(request, mensagem)
             return redirect('listar_reservas')
 
-    dados = {
-        'formulario': form
-    }
-
-    return render(request, 'editar_reserva.html', dados)
+    return render(request, 'editar_reserva.html', {'formulario': form})
 
 
 @login_required
