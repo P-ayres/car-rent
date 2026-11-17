@@ -1,3 +1,6 @@
+from datetime import timedelta
+from decimal import Decimal, InvalidOperation
+
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -620,6 +623,7 @@ def listar_manutencoes(request):
             data_conclusao__isnull=True).order_by('previsao_conclusao'),
         'concluidas': manutencoes.filter(
             data_conclusao__isnull=False).order_by('-data_conclusao'),
+        'veiculos_com_problema': Veiculo.objects.filter(status='P').order_by(Lower('modelo')),
     }
 
     return render(request, 'listar_manutencoes.html', dados)
@@ -667,8 +671,20 @@ def concluir_manutencao(request, id):
             messages.error(request, 'Esta manutenção já foi concluída.')
             return redirect('listar_manutencoes')
 
+        custo = request.POST.get('custo')
+        if custo is None or custo == '':
+            messages.error(
+                request, 'Informe o custo da manutenção antes de concluir.')
+            return redirect('listar_manutencoes')
+
+        try:
+            manutencao.custo = Decimal(custo)
+        except InvalidOperation:
+            messages.error(request, 'O custo informado é inválido.')
+            return redirect('listar_manutencoes')
+
         manutencao.data_conclusao = timezone.now()
-        manutencao.save(update_fields=['data_conclusao'])
+        manutencao.save(update_fields=['custo', 'data_conclusao'])
 
         veiculo = manutencao.veiculo
         veiculo.status = 'D'
@@ -677,6 +693,36 @@ def concluir_manutencao(request, id):
     messages.success(
         request,
         f'Manutenção concluída. Veículo {veiculo} disponível novamente.',
+    )
+
+    return redirect('listar_manutencoes')
+
+
+@admin_required
+@require_POST
+def cancelar_manutencao(request, id):
+
+    with transaction.atomic():
+        manutencao = get_object_or_404(
+            Manutencao.objects.select_for_update().select_related('veiculo'),
+            id=id,
+        )
+
+        if manutencao.data_conclusao:
+            messages.error(request, 'Esta manutenção já foi encerrada.')
+            return redirect('listar_manutencoes')
+
+        manutencao.data_conclusao = timezone.now()
+        manutencao.custo = None
+        manutencao.save(update_fields=['data_conclusao', 'custo'])
+
+        veiculo = manutencao.veiculo
+        veiculo.status = 'P'
+        veiculo.save(update_fields=['status'])
+
+    messages.success(
+        request,
+        f'Manutenção cancelada. Veículo {veiculo} marcado como "Com problema".',
     )
 
     return redirect('listar_manutencoes')
@@ -848,3 +894,26 @@ def confirmar_devolucao(request, id):
     }
 
     return render(request, 'confirmar_devolucao.html', dados)
+
+
+@admin_required
+@require_POST
+def reativar_manutencao(request, id):
+    veiculo = get_object_or_404(Veiculo, id=id)
+
+    manutencao = Manutencao.objects.filter(
+        veiculo=veiculo,
+        data_conclusao__isnull=False,
+    ).order_by('-data_conclusao').first()
+
+    if manutencao:
+        manutencao.data_conclusao = None
+        manutencao.custo = None
+        manutencao.save(update_fields=['data_conclusao', 'custo'])
+
+    veiculo.status = 'M'
+    veiculo.save(update_fields=['status'])
+
+    messages.success(
+        request, f'Veículo {veiculo} movido de volta para manutenção.')
+    return redirect('listar_manutencoes')

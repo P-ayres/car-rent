@@ -3,6 +3,7 @@ from decimal import Decimal
 from django import forms
 from django.contrib.auth import get_user_model, password_validation
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.db.models.functions import Lower
 from django.utils import timezone
 
@@ -246,15 +247,19 @@ class ReservaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['veiculo'].queryset = Veiculo.objects.filter(status='D')
-        self.fields['veiculo'].label_from_instance = lambda obj: f'{obj.modelo} - {obj.placa}'
+        self.fields['veiculo'].queryset = Veiculo.objects.filter(
+            status='D').order_by(Lower('modelo'))
+        self.fields['veiculo'].label_from_instance = (
+            lambda obj: f'{obj.modelo} - {obj.placa} ({obj.get_categoria_display()})')
         if self.instance.pk:
+            # Na edição pode trocar o carro: lista o atual + os disponíveis.
+            # O cliente continua travado (o Django ignora o valor do POST).
             self.fields['veiculo'].queryset = Veiculo.objects.filter(
-                pk=self.instance.veiculo_id)
-            self.fields['veiculo'].disabled = True
+                Q(status='D') | Q(pk=self.instance.veiculo_id)
+            ).order_by(Lower('modelo'))
             self.fields['cliente'].disabled = True
 
-    CAMPOS_DO_VALOR = {'data_inicio', 'data_fim'}
+    CAMPOS_DO_VALOR = {'veiculo', 'data_inicio', 'data_fim'}
 
     def precisa_calcular_valor(self):
         return (not self.instance.pk
@@ -296,6 +301,7 @@ class ManutencaoForm(forms.ModelForm):
             'tipo',
             'motivo',
             'previsao_conclusao',
+            'custo',
         ]
         labels = {
             'veiculo': 'Veículo',
@@ -322,6 +328,8 @@ class ManutencaoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['veiculo'].queryset = Veiculo.objects.filter(
             status='D').order_by(Lower('modelo'))
+        if not self.instance.pk:
+            self.fields['custo'].widget = forms.HiddenInput()
 
     def clean_previsao_conclusao(self):
         previsao = self.cleaned_data['previsao_conclusao']
