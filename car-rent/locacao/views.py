@@ -491,6 +491,8 @@ def listar_reservas(request):
 def editar_reserva(request, id):
 
     reserva = get_object_or_404(Reserva, id=id)
+    # Guardado antes do form, que troca reserva.veiculo ao validar.
+    veiculo_anterior = reserva.veiculo
 
     form = ReservaForm(instance=reserva)
 
@@ -498,14 +500,25 @@ def editar_reserva(request, id):
         form = ReservaForm(request.POST, instance=reserva)
 
         if form.is_valid():
-            reserva = form.save()
+            with transaction.atomic():
+                reserva = form.save()
 
-            messages.success(
-                request,
-                f'Reserva de {reserva.cliente} para {reserva.veiculo} alterada com sucesso! '
-                f'Valor total: {formatar_valor(reserva.valor_total)} '
-                f'({reserva.quantidade_dias} diária(s)).',
-            )
+                trocou_veiculo = reserva.veiculo_id != veiculo_anterior.pk
+                if trocou_veiculo:
+                    # Libera o carro antigo (só se ele estava apenas
+                    # reservado) e reserva o novo.
+                    if veiculo_anterior.status == 'R':
+                        veiculo_anterior.status = 'D'
+                        veiculo_anterior.save()
+                    reserva.veiculo.status = 'R'
+                    reserva.veiculo.save()
+
+            mensagem = f'Reserva de {reserva.cliente} para {reserva.veiculo} alterada com sucesso! '
+            if trocou_veiculo:
+                mensagem += f'Veículo trocado (antes: {veiculo_anterior}). '
+            mensagem += (f'Valor total: {formatar_valor(reserva.valor_total)} '
+                         f'({reserva.quantidade_dias} diária(s)).')
+            messages.success(request, mensagem)
 
             return redirect('listar_reservas')
 
