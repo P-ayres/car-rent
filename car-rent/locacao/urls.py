@@ -49,4 +49,12 @@ urlpatterns = [
          views.cancelar_reserva, name='cancelar_reserva'),
     path('veiculos/disponiveis/', views.listar_veiculos_disponiveis,
          name='listar_veiculos_disponiveis'),
+    path('locacoes/registrar_retirada/',
+         views.registrar_retirada, name='registrar_retirada'),
+    path('locacoes/confirmar_retirada/<int:id>/',
+         views.confirmar_retirada, name='confirmar_retirada'),
+    path('locacoes/confirmar_devolucao/<int:id>/',
+         views.confirmar_devolucao, name='confirmar_devolucao'),
+    path('locacoes/registrar_devolucao/',
+         views.registrar_devolucao, name='registrar_devolucao'),
 ]

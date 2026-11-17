@@ -1,0 +1,46 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title>Confirmar Retirada</title>
+</head>
+<body>
+
+    {% include '_menu.html' %}
+    {% include '_mensagem.html' %}
+
+    <h1>Confirmar Retirada</h1>
+
+    <div class="container-principal form-container">
+        <section>
+            <h2>Dados do cliente</h2>
+            <p><strong>Nome:</strong> {{ reserva.cliente.nome }} {{ reserva.cliente.sobrenome }}</p>
+            <p><strong>CPF:</strong> {{ reserva.cliente.cpf}}</p>
+            <p><strong>Telefone:</strong> {{ reserva.cliente.telefone}}</p>
+            <p><strong>Endereço:</strong> {{ reserva.cliente.endereco}}</p>
+        </section>
+
+        <section>
+            <h2>Dados da reserva</h2>
+            <p><strong>Reserva:</strong> #{{ reserva.id }}</p>
+            <p><strong>Veículo:</strong> {{ reserva.veiculo.marca }} {{ reserva.veiculo.modelo }} - {{ reserva.veiculo.placa }}</p>
+            <p><strong>Retirada prevista:</strong> {{ reserva.data_inicio|date:"d/m/Y H:i" }}</p>
+            <p><strong>Devolução prevista:</strong> {{ reserva.data_fim|date:"d/m/Y H:i" }}</p>
+            <p><strong>Valor total:</strong> R$ {{ reserva.valor_total|floatformat:2 }}</p>
+        </section>
+
+        <section>
+            <h2>Estado do veículo na retirada</h2>
+            <form method="post">
+                {% csrf_token %}
+                {{ formulario.as_p }}
+                <button class="button" type="submit">Confirmar retirada</button>
+            </form>
+        </section>
+    </div>
+</body>
+</html>
