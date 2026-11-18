@@ -468,3 +468,25 @@ class ConfirmarDevolucaoForm(forms.ModelForm):
             cleaned_data['multa_danos'] = Decimal('0')
 
         return cleaned_data
+
+
+class RelatorioOperacionalForm(forms.Form):
+    data_inicio = forms.DateField(
+        label='Data inicial',
+        widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+    )
+    data_fim = forms.DateField(
+        label='Data final',
+        widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        data_inicio = cleaned_data.get('data_inicio')
+        data_fim = cleaned_data.get('data_fim')
+
+        if data_inicio and data_fim and data_fim < data_inicio:
+            raise ValidationError(
+                'A data final não pode ser anterior à data inicial.')
+
+        return cleaned_data
