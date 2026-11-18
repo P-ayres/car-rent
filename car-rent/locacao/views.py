@@ -974,7 +974,7 @@ def montar_relatorio_operacional(data_inicio, data_fim):
     receita_total = receita_locacoes + receita_multas
 
     contagem_status = dict(
-        reservas.values_list('status').annotate(total=Count('id')))
+        reservas.order_by().values_list('status').annotate(total=Count('id')))
     reservas_por_status = [
         {'status': rotulo, 'total': contagem_status.get(codigo, 0)}
         for codigo, rotulo in STATUS_RESERVA
