@@ -360,6 +360,12 @@ input[type="submit"]:disabled {
     margin-top: 4px;
 }
 
+.form-container form > button,
+.form-container form > input[type="submit"] {
+    display: flex;
+    margin: 4px auto 0;
+}
+
 /* Alerts */
 .messages {
     width: min(100% - 32px, 1200px);
@@ -703,11 +709,6 @@ th {
 .login-card h2 {
     margin: 0 0 22px;
     text-align: center;
-}
-
-.login-card form > button {
-    display: flex;
-    margin: 4px auto 0;
 }
 
 .login-error {
