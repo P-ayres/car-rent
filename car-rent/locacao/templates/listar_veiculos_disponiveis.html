@@ -11,6 +11,7 @@
 <body>
 
     {% include '_menu.html' %}
+    {% include '_mensagem.html' %}
 
     <h1> Veículos Disponíveis </h1>
     
@@ -42,7 +43,8 @@
                 <button class="button pesquisar" type="submit">Pesquisar</button> 
             </form>
         </div>
-        <table class="tabela" border="">
+        <div class="table-responsive">
+        <table class="tabela">
 
             <thead>
                 <tr>
@@ -64,7 +66,7 @@
                     <td> {{ veiculo.placa }} </td>
                     <td> {{ veiculo.get_categoria_display }} </td>
                     <td> {{ veiculo.marca }} </td>
-                    <td> {{ veiculo.get_status_display }} </td>
+                    <td><span class="badge badge-success">{{ veiculo.get_status_display }}</span></td>
                     <td> {{ veiculo.preco_locacao }} </td>
                 </tr>
 
@@ -76,6 +78,7 @@
 
             </tbody>
         </table>
+        </div>
     </div>
 </body>
 </html>

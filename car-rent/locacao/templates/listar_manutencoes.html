@@ -24,7 +24,8 @@
 
         <h2> Em andamento </h2>
 
-        <table class="tabela" border="">
+        <div class="table-responsive">
+        <table class="tabela">
 
             <thead>
                 <tr>
@@ -43,7 +44,7 @@
                 {% for manutencao in em_andamento %}
 
                 <tr>
-                    <td> {{ manutencao.veiculo }} </td>
+                    <td>{{ manutencao.veiculo }} <span class="badge badge-warning">Em manutenção</span></td>
                     <td> {{ manutencao.get_tipo_display }} </td>
                     <td> {{ manutencao.motivo }} </td>
                     <td> {{ manutencao.data_inicio|date:"d/m/Y" }} </td>
@@ -59,12 +60,12 @@
                             </form>
                         {% endif %}
                         {% if manutencao.custo is not None %}
-                            <span>Concluída</span>
+                            <span class="badge badge-success">Concluída</span>
                         {% endif %}
                         {% if manutencao.custo is None %}
                             <form method="post" action="{% url 'cancelar_manutencao' manutencao.id %}">
                                 {% csrf_token %}
-                            <button class="button button-small" type="submit">Cancelar</button>
+                            <button class="button button-danger button-small" type="submit">Cancelar</button>
                             </form>
                         {% endif %}
                     </td>
@@ -73,7 +74,7 @@
                 {% empty %}
 
                 <tr>
-                    <td colspan="6"> Nenhum veículo em manutenção. </td>
+                    <td colspan="7"> Nenhum veículo em manutenção. </td>
                 </tr>
 
                 {% endfor %}
@@ -81,10 +82,12 @@
             </tbody>
 
         </table>
+        </div>
 
         <h2> Concluídas </h2>
 
-        <table class="tabela" border="">
+        <div class="table-responsive">
+        <table class="tabela">
 
             <thead>
                 <tr>
@@ -103,7 +106,7 @@
                 {% for manutencao in concluidas %}
 
                 <tr>
-                    <td> {{ manutencao.veiculo }} </td>
+                    <td>{{ manutencao.veiculo }} <span class="badge badge-success">Concluída</span></td>
                     <td> {{ manutencao.get_tipo_display }} </td>
                     <td> {{ manutencao.motivo }} </td>
                     <td> {{ manutencao.data_inicio|date:"d/m/Y" }} </td>
@@ -115,7 +118,7 @@
                 {% empty %}
 
                 <tr>
-                    <td colspan="6"> Nenhuma manutenção concluída. </td>
+                    <td colspan="7"> Nenhuma manutenção concluída. </td>
                 </tr>
 
                 {% endfor %}
@@ -123,10 +126,12 @@
             </tbody>
 
         </table>
+        </div>
 
         <h2> Com problema </h2>
 
-        <table class="tabela" border="">
+        <div class="table-responsive">
+        <table class="tabela">
 
             <thead>
                 <tr>
@@ -144,7 +149,7 @@
                 <tr>
                     <td> {{ veiculo }} </td>
                     <td> {{ veiculo.get_categoria_display }} </td>
-                    <td> {{ veiculo.get_status_display }} </td>
+                    <td><span class="badge badge-danger">{{ veiculo.get_status_display }}</span></td>
                     <td class="nao-imprimir">
                         <form method="post" action="{% url 'reativar_manutencao' veiculo.id %}">
                             {% csrf_token %}
@@ -164,6 +169,7 @@
             </tbody>
 
         </table>
+        </div>
 
 
     </div>

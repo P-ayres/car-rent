@@ -11,6 +11,7 @@
 <body>
 
     {% include '_menu.html' %}
+    {% include '_mensagem.html' %}
     <h1> Lista de Funcionários </h1>
 
     <div class="lista-funcionario container-principal">
@@ -21,7 +22,8 @@
             </form>
         </div>
 
-        <table class="tabela" border="">
+        <div class="table-responsive">
+        <table class="tabela">
             <thead>
                 <tr>
                     <th>Nome  <a href="?ordem=crescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↑ </a>  <a href="?ordem=decrescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↓ </a>  </th>
@@ -30,6 +32,7 @@
                     <th>Sexo</th>
                     <th>Data de cadastro</th>
                     <th>Usuário</th>
+                    <th>Status</th>
                     <th class="nao-imprimir">Ações</th>
                 </tr>
             </thead>
@@ -51,11 +54,12 @@
                             Sem conta
                         {% endif %}
                     </td>
+                    <td><span class="badge badge-success">Ativo</span></td>
 
                     <td class="nao-imprimir"> 
-                        <a href="{% url 'editar_funcionario' funcionario.id %}"> Editar </a> |
-                        <a href="{% url 'excluir_funcionario' funcionario.id %}" onclick="return confirm('Tem certeza que deseja excluir este funcionário?');"> Excluir </a> |
-                        <a href="{% url 'desativar_funcionario' funcionario.id %}" onclick="return confirm('Tem certeza que deseja desativar este funcionário?');"> Desativar </a>
+                        <a class="action-link" href="{% url 'editar_funcionario' funcionario.id %}">Editar</a> |
+                        <a class="action-link action-danger" href="{% url 'excluir_funcionario' funcionario.id %}" onclick="return confirm('Tem certeza que deseja excluir este funcionário?');">Excluir</a> |
+                        <a class="action-link" href="{% url 'desativar_funcionario' funcionario.id %}" onclick="return confirm('Tem certeza que deseja desativar este funcionário?');">Desativar</a>
                     </td>
                 </tr>
 
@@ -64,6 +68,7 @@
             </tbody>
 
         </table>
+        </div>
 
         <br><br>
 

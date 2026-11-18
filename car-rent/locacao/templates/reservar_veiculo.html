@@ -15,7 +15,7 @@
     <h1>Cadastrar Reserva</h1>
 
     <div class="container-principal form-container">
-        <button class="button" onclick="window.location.href='{% url 'cadastrar_cliente' %}'">Cadastrar cliente</button>
+        <a class="button button-secondary" href="{% url 'cadastrar_cliente' %}">Cadastrar cliente</a>
         <form method="post">
 
             {% csrf_token %}
