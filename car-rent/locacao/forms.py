@@ -10,8 +10,10 @@ from django.utils import timezone
 from .models import (
     CATEGORIA_CHOICES,
     Cliente,
+    Devolucao,
     Funcionario,
     Manutencao,
+    Retirada,
     Tarifa,
     Veiculo,
     Reserva,
@@ -368,3 +370,101 @@ class TarifaForm(forms.Form):
                 defaults={
                     'valor_diaria': self.cleaned_data[f'categoria_{codigo}']},
             )
+
+
+class ConfirmarRetiradaForm(forms.ModelForm):
+    class Meta:
+        model = Retirada
+        fields = [
+            'quilometragem_inicial',
+            'nivel_combustivel',
+        ]
+        labels = {
+            'quilometragem_inicial': 'Quilometragem inicial (km)',
+            'nivel_combustivel': 'Nível de combustível (litros)',
+        }
+        widgets = {
+            'quilometragem_inicial': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'step': 1,
+            }),
+            'nivel_combustivel': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'step': '0.01',
+            }),
+        }
+
+
+class ConfirmarDevolucaoForm(forms.ModelForm):
+    multa_danos = forms.DecimalField(
+        label='Multa por danos (R$)',
+        max_digits=10,
+        decimal_places=2,
+        min_value=Decimal('0'),
+        required=False,
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control',
+            'min': 0,
+            'step': '0.01',
+        }),
+    )
+
+    class Meta:
+        model = Devolucao
+        fields = [
+            'quilometragem_final',
+            'danos',
+            'descricao_danos',
+            'multa_danos',
+        ]
+        labels = {
+            'quilometragem_final': 'Quilometragem final (km)',
+            'danos': 'Há danos?',
+            'descricao_danos': 'Descrição dos danos',
+        }
+        widgets = {
+            'quilometragem_final': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'step': '0.01',
+            }),
+            'danos': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+            }),
+            'descricao_danos': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Descreva os danos identificados',
+            }),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        quilometragem = cleaned_data.get('quilometragem_final')
+
+        if quilometragem is not None and self.instance.reserva_id:
+            quilometragem_inicial = self.instance.reserva.retirada.quilometragem_inicial
+            if quilometragem < quilometragem_inicial:
+                self.add_error(
+                    'quilometragem_final',
+                    'A quilometragem final não pode ser menor que a inicial.',
+                )
+
+        tem_danos = cleaned_data.get('danos')
+        descricao_danos = cleaned_data.get('descricao_danos')
+        multa_danos = cleaned_data.get('multa_danos')
+
+        if tem_danos and not descricao_danos:
+            self.add_error('descricao_danos', 'Descreva os danos identificados.')
+
+        if not tem_danos and (descricao_danos or multa_danos):
+            raise forms.ValidationError(
+                'Marque "Há danos?" para informar uma descrição ou multa por danos.'
+            )
+
+        if cleaned_data.get('multa_danos') is None and 'multa_danos' not in self.errors:
+            cleaned_data['multa_danos'] = Decimal('0')
+
+        return cleaned_data

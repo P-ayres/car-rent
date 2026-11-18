@@ -30,8 +30,11 @@
                     <th>Data de devolução</th>
                     <th>Data de cadastro</th>
                     <th>Diárias</th>
-                    <th>Valor total</th>
-                    <th>Editar</th>
+                    <th>Valor da locação</th>
+                    <th>Multas</th>
+                    <th>Total final</th>
+                    <th>Status</th>
+                    <th>Ações</th>
                 </tr>
             </thead>
 
@@ -46,9 +49,21 @@
                     <td> {{ reserva.data_cadastro }} </td>
                     <td> {{ reserva.quantidade_dias }} </td>
                     <td title="Locação R$ {{ reserva.valor_locacao|floatformat:'2g' }} + {{ reserva.quantidade_dias }} x diária R$ {{ reserva.valor_diaria|floatformat:'2g' }}"> R$ {{ reserva.valor_total|floatformat:"2g" }} </td>
+                    {% with devolucao=reserva.devolucao %}
+                        {% if devolucao %}
+                            <td>R$ {{ devolucao.valor_multa_total|floatformat:"2g" }}</td>
+                            <td>R$ {{ devolucao.valor_final|floatformat:"2g" }}</td>
+                        {% else %}
+                            <td>—</td>
+                            <td>—</td>
+                        {% endif %}
+                    {% endwith %}
+                    <td>{{ reserva.get_status_display }}</td>
                     <td>
+                        {% if reserva.status == 'P' %}
                         <a href="{% url 'editar_reserva' reserva.id %}">Editar</a> | 
                         <a href="{% url 'cancelar_reserva' reserva.id %}" onclick="return confirm('Tem certeza que deseja cancelar esta reserva?');">Cancelar</a>
+                        {% endif %}
                     </td>
                 </tr>
 

@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Q
 from django.db.models.functions import Lower
@@ -14,12 +14,24 @@ from django.views.decorators.http import require_POST
 from functools import wraps
 from .forms import (
     ClienteForm,
+    ConfirmarDevolucaoForm,
+    ConfirmarRetiradaForm,
     FuncionarioForm,
     ManutencaoForm,
     TarifaForm,
     ReservaForm, VeiculoForm,
 )
-from .models import CATEGORIA_CHOICES, STATUS_CHOICES, Cliente, Funcionario, Manutencao, Reserva, Veiculo
+from .models import (
+    CATEGORIA_CHOICES,
+    STATUS_CHOICES,
+    Cliente,
+    Devolucao,
+    Funcionario,
+    Manutencao,
+    Reserva,
+    Retirada,
+    Veiculo,
+)
 
 # Create your views here.
 
@@ -28,7 +40,8 @@ User = get_user_model()
 
 def formatar_valor(valor):
     """Formata um Decimal como moeda brasileira: 1234.5 -> 'R$ 1.234,50'."""
-    texto = f'{valor:,.2f}'.replace(',', 'X').replace('.', ',').replace('X', '.')
+    texto = f'{valor:,.2f}'.replace(
+        ',', 'X').replace('.', ',').replace('X', '.')
     return f'R$ {texto}'
 
 
@@ -414,11 +427,14 @@ def excluir_cliente(request, id):
     cliente = get_object_or_404(Cliente, id=id)
 
     reservas_ativas = Reserva.objects.filter(
-        cliente=cliente, veiculo__status='R')
+        cliente=cliente,
+        status__in=['P', 'A'],
+    )
     if reservas_ativas.exists():
         messages.error(
             request,
-            f'Não é possível excluir o cliente {cliente.nome} {cliente.sobrenome} pois ele possui reservas ativas.'
+            f'Não é possível excluir o cliente {cliente.nome} {cliente.sobrenome} '
+            'pois ele possui reservas pendentes ou em andamento.'
         )
         return redirect('listar_clientes')
 
@@ -443,17 +459,26 @@ def reservar_veiculo(request):
         form = ReservaForm(request.POST)
 
         if form.is_valid():
-            reserva = form.save()
+            with transaction.atomic():
+                veiculo = Veiculo.objects.select_for_update().get(
+                    pk=form.cleaned_data['veiculo'].pk,
+                )
+                if veiculo.status != 'D':
+                    form.add_error(
+                        'veiculo', 'Este veículo não está mais disponível.')
+                else:
+                    reserva = form.save()
+                    veiculo.status = 'R'
+                    veiculo.save(update_fields=['status'])
 
-            messages.success(
-                request,
-                f'Reserva de {reserva.cliente} para {reserva.veiculo} cadastrada com sucesso! '
-                f'Valor total: {formatar_valor(reserva.valor_total)} '
-                f'({reserva.quantidade_dias} diária(s)).',
-            )
-            reserva.veiculo.status = 'R'
-            reserva.veiculo.save()
-            return redirect('listar_reservas')
+            if not form.errors:
+                messages.success(
+                    request,
+                    f'Reserva de {reserva.cliente} para {reserva.veiculo} cadastrada com sucesso! '
+                    f'Valor total: {formatar_valor(reserva.valor_total)} '
+                    f'({reserva.quantidade_dias} diária(s)).',
+                )
+                return redirect('listar_reservas')
 
     dados = {
         'formulario': form,
@@ -468,7 +493,8 @@ def listar_reservas(request):
     ordem = request.GET.get('ordem')
     nome_da_pesquisa = request.GET.get('nome_da_pesquisa', '')
 
-    reservas = Reserva.objects.select_related('cliente', 'veiculo')
+    reservas = Reserva.objects.select_related(
+        'cliente', 'veiculo', 'devolucao')
 
     if nome_da_pesquisa:
         reservas = reservas.filter(
@@ -492,11 +518,14 @@ def listar_reservas(request):
 
 @login_required
 def editar_reserva(request, id):
-
     reserva = get_object_or_404(Reserva, id=id)
-    # Guardado antes do form, que troca reserva.veiculo ao validar.
-    veiculo_anterior = reserva.veiculo
+    if reserva.status != 'P':
+        messages.error(
+            request, 'Somente reservas pendentes podem ser editadas.')
+        return redirect('listar_reservas')
 
+    # O formulário pode trocar o veículo da instância durante a validação.
+    veiculo_anterior = reserva.veiculo
     form = ReservaForm(instance=reserva)
 
     if request.method == 'POST':
@@ -505,41 +534,42 @@ def editar_reserva(request, id):
         if form.is_valid():
             with transaction.atomic():
                 reserva = form.save()
-
                 trocou_veiculo = reserva.veiculo_id != veiculo_anterior.pk
+
                 if trocou_veiculo:
-                    # Libera o carro antigo (só se ele estava apenas
-                    # reservado) e reserva o novo.
                     if veiculo_anterior.status == 'R':
                         veiculo_anterior.status = 'D'
-                        veiculo_anterior.save()
+                        veiculo_anterior.save(update_fields=['status'])
+
                     reserva.veiculo.status = 'R'
-                    reserva.veiculo.save()
+                    reserva.veiculo.save(update_fields=['status'])
 
             mensagem = f'Reserva de {reserva.cliente} para {reserva.veiculo} alterada com sucesso! '
             if trocou_veiculo:
                 mensagem += f'Veículo trocado (antes: {veiculo_anterior}). '
-            mensagem += (f'Valor total: {formatar_valor(reserva.valor_total)} '
-                         f'({reserva.quantidade_dias} diária(s)).')
+            mensagem += (
+                f'Valor total: {formatar_valor(reserva.valor_total)} '
+                f'({reserva.quantidade_dias} diária(s)).'
+            )
             messages.success(request, mensagem)
-
             return redirect('listar_reservas')
 
-    dados = {
-        'formulario': form
-    }
-
-    return render(request, 'editar_reserva.html', dados)
+    return render(request, 'editar_reserva.html', {'formulario': form})
 
 
 @login_required
 def cancelar_reserva(request, id):
 
     reserva = get_object_or_404(Reserva, id=id)
-    reserva.veiculo.status = 'D'
-    reserva.veiculo.save()
+    if reserva.status != 'P':
+        messages.error(
+            request, 'Somente reservas pendentes podem ser canceladas.')
+        return redirect('listar_reservas')
 
-    reserva.delete()
+    reserva.status = 'X'
+    reserva.save(update_fields=['status'])
+    reserva.veiculo.status = 'D'
+    reserva.veiculo.save(update_fields=['status'])
 
     messages.success(
         request,
@@ -643,7 +673,8 @@ def concluir_manutencao(request, id):
 
         custo = request.POST.get('custo')
         if custo is None or custo == '':
-            messages.error(request, 'Informe o custo da manutenção antes de concluir.')
+            messages.error(
+                request, 'Informe o custo da manutenção antes de concluir.')
             return redirect('listar_manutencoes')
 
         try:
@@ -719,6 +750,152 @@ def configurar_tarifas(request):
     return render(request, 'configurar_tarifas.html', dados)
 
 
+@login_required
+def registrar_retirada(request):
+    ordem = request.GET.get('ordem')
+    nome_da_pesquisa = request.GET.get('nome_da_pesquisa', '')
+
+    reservas = Reserva.objects.select_related(
+        'cliente', 'veiculo'
+    ).filter(
+        status='P',
+        veiculo__status='R',
+        retirada__isnull=True,
+    )
+
+    if nome_da_pesquisa:
+        reservas = reservas.filter(
+            Q(cliente__nome__icontains=nome_da_pesquisa)
+            | Q(veiculo__placa__icontains=nome_da_pesquisa)
+        )
+
+    ordenacao = [Lower('cliente__nome'), Lower('cliente__sobrenome')]
+    if ordem == 'decrescente':
+        ordenacao = [Lower('cliente__nome').desc(),
+                     Lower('cliente__sobrenome').desc()]
+
+    reservas = reservas.order_by(*ordenacao)
+
+    dados = {
+        'reservas': reservas,
+        'nome_da_pesquisa': nome_da_pesquisa,
+    }
+    return render(request, 'registrar_retirada.html', dados)
+
+
+@login_required
+def confirmar_retirada(request, id):
+
+    reserva = get_object_or_404(
+        Reserva.objects.select_related('cliente', 'veiculo').filter(
+            status='P',
+            veiculo__status='R',
+            retirada__isnull=True,
+        ),
+        id=id,
+    )
+    retirada = Retirada(reserva=reserva)
+
+    form = ConfirmarRetiradaForm(instance=retirada)
+
+    if request.method == 'POST':
+        form = ConfirmarRetiradaForm(request.POST, instance=retirada)
+
+        if form.is_valid():
+            try:
+                form.save()
+            except ValidationError as error:
+                form.add_error(None, error)
+            else:
+                messages.success(
+                    request,
+                    f'Retirada do veículo {reserva.veiculo} para '
+                    f'{reserva.cliente} confirmada com sucesso!',
+                )
+
+                return redirect('listar_reservas')
+
+    dados = {
+        'formulario': form,
+        'reserva': reserva,
+    }
+
+    return render(request, 'confirmar_retirada.html', dados)
+
+
+@login_required
+def registrar_devolucao(request):
+    ordem = request.GET.get('ordem')
+    nome_da_pesquisa = request.GET.get('nome_da_pesquisa', '')
+
+    reservas = Reserva.objects.select_related(
+        'cliente', 'veiculo'
+    ).filter(
+        status='A',
+        retirada__isnull=False,
+        devolucao__isnull=True,
+    )
+
+    if nome_da_pesquisa:
+        reservas = reservas.filter(
+            Q(cliente__nome__icontains=nome_da_pesquisa)
+            | Q(veiculo__placa__icontains=nome_da_pesquisa)
+        )
+
+    ordenacao = [Lower('cliente__nome'), Lower('cliente__sobrenome')]
+    if ordem == 'decrescente':
+        ordenacao = [Lower('cliente__nome').desc(),
+                     Lower('cliente__sobrenome').desc()]
+
+    reservas = reservas.order_by(*ordenacao)
+
+    dados = {
+        'reservas': reservas,
+        'nome_da_pesquisa': nome_da_pesquisa,
+    }
+    return render(request, 'registrar_devolucao.html', dados)
+
+
+@login_required
+def confirmar_devolucao(request, id):
+
+    reserva = get_object_or_404(
+        Reserva.objects.select_related('cliente', 'veiculo', 'retirada').filter(
+            status='A',
+            retirada__isnull=False,
+            devolucao__isnull=True,
+        ),
+        id=id,
+    )
+    devolucao = Devolucao(reserva=reserva)
+
+    form = ConfirmarDevolucaoForm(instance=devolucao)
+
+    if request.method == 'POST':
+        form = ConfirmarDevolucaoForm(request.POST, instance=devolucao)
+
+        if form.is_valid():
+            try:
+                form.save()
+            except ValidationError as error:
+                form.add_error(None, error)
+            else:
+                messages.success(
+                    request,
+                    f'Devolução do veículo {reserva.veiculo} por '
+                    f'{reserva.cliente} registrada com sucesso!',
+                )
+
+                return redirect('listar_reservas')
+
+    dados = {
+        'formulario': form,
+        'reserva': reserva,
+    }
+
+    return render(request, 'confirmar_devolucao.html', dados)
+
+
 @admin_required
 @require_POST
 def reativar_manutencao(request, id):
@@ -737,5 +914,6 @@ def reativar_manutencao(request, id):
     veiculo.status = 'M'
     veiculo.save(update_fields=['status'])
 
-    messages.success(request, f'Veículo {veiculo} movido de volta para manutenção.')
+    messages.success(
+        request, f'Veículo {veiculo} movido de volta para manutenção.')
     return redirect('listar_manutencoes')

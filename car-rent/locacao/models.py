@@ -1,7 +1,9 @@
 from datetime import timedelta
 
 from django.conf import settings
-from django.db import models
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
+from django.db import models, transaction
 
 # Create your models here.
 
@@ -31,6 +33,13 @@ STATUS_CHOICES = [
     ('M', 'Em manutenção'),
     ('R', 'Reservado'),
     ('P', 'Com problema'),
+]
+
+STATUS_RESERVA = [
+    ('P', 'Pendente'),
+    ('A', 'Em andamento'),
+    ('C', 'Concluída'),
+    ('X', 'Cancelada'),
 ]
 
 
@@ -95,6 +104,11 @@ class Cliente(models.Model):
 class Reserva(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
     veiculo = models.ForeignKey(Veiculo, on_delete=models.CASCADE)
+    status = models.CharField(
+        max_length=1,
+        choices=STATUS_RESERVA,
+        default='P',
+    )
     data_inicio = models.DateTimeField()
     data_fim = models.DateTimeField()
     data_cadastro = models.DateTimeField(auto_now_add=True)
@@ -162,3 +176,103 @@ class Tarifa(models.Model):
 
     def __str__(self):
         return f"{self.get_categoria_display()}: R$ {self.valor_diaria}/dia"
+
+
+class Retirada(models.Model):
+    reserva = models.OneToOneField(
+        Reserva,
+        on_delete=models.CASCADE,
+        related_name='retirada',
+    )
+    data_retirada = models.DateTimeField(auto_now_add=True)
+    quilometragem_inicial = models.DecimalField(
+        max_digits=20,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    nivel_combustivel = models.DecimalField(
+        max_digits=20,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+
+    def __str__(self):
+        return f"Retirada de {self.reserva}"
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            return super().save(*args, **kwargs)
+
+        with transaction.atomic():
+            reserva = Reserva.objects.select_for_update().get(pk=self.reserva_id)
+            veiculo = Veiculo.objects.select_for_update().get(pk=reserva.veiculo_id)
+            if reserva.status != 'P' or veiculo.status != 'R':
+                raise ValidationError(
+                    'Somente reservas pendentes com veículo reservado podem ter retirada.'
+                )
+
+            super().save(*args, **kwargs)
+            reserva.status = 'A'
+            reserva.save(update_fields=['status'])
+            veiculo.status = 'I'
+            veiculo.save(update_fields=['status'])
+            self.reserva = reserva
+
+
+class Devolucao(models.Model):
+    reserva = models.OneToOneField(
+        Reserva,
+        on_delete=models.CASCADE,
+        related_name='devolucao',
+    )
+    data_devolucao = models.DateTimeField(auto_now_add=True)
+    quilometragem_final = models.DecimalField(
+        max_digits=20,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    danos = models.BooleanField(default=False)
+    descricao_danos = models.TextField(blank=True)
+    multa_atraso = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)],
+    )
+    multa_danos = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        validators=[MinValueValidator(0)],
+    )
+
+    @property
+    def valor_multa_total(self):
+        return self.multa_atraso + self.multa_danos
+
+    @property
+    def valor_final(self):
+        return self.reserva.valor_total + self.valor_multa_total
+
+    def __str__(self):
+        return f"Devolução de {self.reserva}"
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            return super().save(*args, **kwargs)
+
+        with transaction.atomic():
+            reserva = Reserva.objects.select_for_update().get(pk=self.reserva_id)
+            veiculo = Veiculo.objects.select_for_update().get(pk=reserva.veiculo_id)
+            if (reserva.status != 'A'
+                    or not Retirada.objects.filter(reserva=reserva).exists()):
+                raise ValidationError(
+                    'Somente reservas em andamento com retirada registrada podem ter devolução.'
+                )
+
+            super().save(*args, **kwargs)
+            reserva.status = 'C'
+            reserva.save(update_fields=['status'])
+            veiculo.status = 'D'
+            veiculo.save(update_fields=['status'])
+            self.reserva = reserva
