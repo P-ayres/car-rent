@@ -921,7 +921,7 @@ def reativar_manutencao(request, id):
     return redirect('listar_manutencoes')
 
 
-@login_required
+@admin_required
 def relatorios(request):
     form = RelatorioOperacionalForm()
     dados = {'formulario': form}
