@@ -1,0 +1,215 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <title> Relatórios </title>
+</head>
+<body>
+
+    {% include '_menu.html' %}
+
+    {% include '_mensagem.html' %}
+
+    <h1 class="nao-imprimir"> Relatórios </h1>
+
+    <div class="container-principal">
+
+        <div class="filtro-relatorio card nao-imprimir">
+            <h2> Relatório operacional </h2>
+
+            <form method="GET">
+                <div class="campo">
+                    <label for="{{ formulario.data_inicio.id_for_label }}">{{ formulario.data_inicio.label }}</label>
+                    {{ formulario.data_inicio }}
+                </div>
+
+                <div class="campo">
+                    <label for="{{ formulario.data_fim.id_for_label }}">{{ formulario.data_fim.label }}</label>
+                    {{ formulario.data_fim }}
+                </div>
+
+                <button class="button" type="submit">Gerar Relatório</button>
+            </form>
+
+            {% if formulario.errors %}
+                {{ formulario.non_field_errors }}
+                {{ formulario.data_inicio.errors }}
+                {{ formulario.data_fim.errors }}
+            {% endif %}
+        </div>
+
+        {% if relatorio %}
+
+        <div class="relatorio card">
+
+            <div class="relatorio-cabecalho">
+                <div>
+                    <h2> Relatório Operacional </h2>
+                    <p>
+                        Período: {{ relatorio.data_inicio|date:"d/m/Y" }} a {{ relatorio.data_fim|date:"d/m/Y" }}
+                    </p>
+                    <p>
+                        Gerado em {{ relatorio.gerado_em|date:"d/m/Y H:i" }} por {{ user.username }}
+                    </p>
+                </div>
+
+                <button class="button nao-imprimir" type="button" onclick="window.print()">
+                    Imprimir
+                </button>
+            </div>
+
+            <div class="resumo-relatorio">
+                <div class="resumo-item">
+                    <span>Reservas no período</span>
+                    <strong>{{ relatorio.total_reservas }}</strong>
+                </div>
+                <div class="resumo-item">
+                    <span>Manutenções no período</span>
+                    <strong>{{ relatorio.total_manutencoes }}</strong>
+                </div>
+                <div class="resumo-item">
+                    <span>Receita de locações</span>
+                    <strong>R$ {{ relatorio.receita_locacoes|floatformat:"2g" }}</strong>
+                </div>
+                <div class="resumo-item">
+                    <span>Receita de multas</span>
+                    <strong>R$ {{ relatorio.receita_multas|floatformat:"2g" }}</strong>
+                </div>
+                <div class="resumo-item">
+                    <span>Custo de manutenções</span>
+                    <strong>R$ {{ relatorio.custo_manutencoes|floatformat:"2g" }}</strong>
+                </div>
+                <div class="resumo-item destaque">
+                    <span>Valor agregado</span>
+                    <strong class="{% if relatorio.valor_agregado < 0 %}valor-negativo{% endif %}">
+                        R$ {{ relatorio.valor_agregado|floatformat:"2g" }}
+                    </strong>
+                </div>
+            </div>
+
+            <h3> Reservas por status </h3>
+
+            <table class="tabela" border="">
+                <thead>
+                    <tr>
+                        {% for item in relatorio.reservas_por_status %}
+                            <th>{{ item.status }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {% for item in relatorio.reservas_por_status %}
+                            <td>{{ item.total }}</td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3> Reservas </h3>
+
+            <table class="tabela" border="">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Veículo</th>
+                        <th>Retirada</th>
+                        <th>Devolução</th>
+                        <th>Diárias</th>
+                        <th>Valor da locação</th>
+                        <th>Multas</th>
+                        <th>Total final</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for reserva in relatorio.reservas %}
+                    <tr>
+                        <td> {{ reserva.cliente }} </td>
+                        <td> {{ reserva.veiculo }} </td>
+                        <td> {{ reserva.data_inicio|date:"d/m/Y H:i" }} </td>
+                        <td> {{ reserva.data_fim|date:"d/m/Y H:i" }} </td>
+                        <td> {{ reserva.quantidade_dias }} </td>
+                        <td> R$ {{ reserva.valor_total|floatformat:"2g" }} </td>
+                        {% with devolucao=reserva.devolucao %}
+                            {% if devolucao %}
+                                <td>R$ {{ devolucao.valor_multa_total|floatformat:"2g" }}</td>
+                                <td>R$ {{ devolucao.valor_final|floatformat:"2g" }}</td>
+                            {% else %}
+                                <td>—</td>
+                                <td>R$ {{ reserva.valor_total|floatformat:"2g" }}</td>
+                            {% endif %}
+                        {% endwith %}
+                        <td> {{ reserva.get_status_display }} </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9"> Nenhuma reserva no período. </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h3> Manutenções </h3>
+
+            <table class="tabela" border="">
+                <thead>
+                    <tr>
+                        <th>Veículo</th>
+                        <th>Tipo</th>
+                        <th>Motivo</th>
+                        <th>Início</th>
+                        <th>Previsão</th>
+                        <th>Conclusão</th>
+                        <th>Situação</th>
+                        <th>Custo</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for manutencao in relatorio.manutencoes %}
+                    <tr>
+                        <td> {{ manutencao.veiculo }} </td>
+                        <td> {{ manutencao.get_tipo_display }} </td>
+                        <td> {{ manutencao.motivo }} </td>
+                        <td> {{ manutencao.data_inicio|date:"d/m/Y" }} </td>
+                        <td> {{ manutencao.previsao_conclusao|date:"d/m/Y" }} </td>
+                        <td> {{ manutencao.data_conclusao|date:"d/m/Y"|default:"—" }} </td>
+                        <td>
+                            {% if not manutencao.data_conclusao %}
+                                Em andamento
+                            {% elif manutencao.custo is None %}
+                                Cancelada
+                            {% else %}
+                                Concluída
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if manutencao.custo is not None %}
+                                R$ {{ manutencao.custo|floatformat:"2g" }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8"> Nenhuma manutenção no período. </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+</body>
+</html>
