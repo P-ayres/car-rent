@@ -3,8 +3,9 @@
 # SIstema de locação de veiculos
 ### *Um sistema simples de locação de veiculos automotivos* 
 
-[![Python](https://img.shields.io/badge/Python-Django-blue)](https://www.djangoproject.com/)
+[![Python](https://img.shields.io/badge/Python-Django-green)](https://www.djangoproject.com/)
 [![Board](https://img.shields.io/badge/Development-Board-purple)](https://github.com/users/P-ayres/projects/5/views/1)
+[![Team](https://img.shields.io/badge/Development-Team-blue)](https://github.com/P-ayres/car-rent/graphs/contributors?all=1)
 
 
 #### Um sistema desenvolvido em Django como requisito obrigatório para a aprovação na cadeira de desenvolvimento full stack
@@ -27,3 +28,4 @@ na pasta do projeto: uv sync
 cd g2
 uv run python manage.py runserver
 ```
+
