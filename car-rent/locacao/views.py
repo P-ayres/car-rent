@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.shortcuts import get_object_or_404, render, redirect
@@ -7,7 +7,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import Lower
 from django.utils import timezone
 from django.views.decorators.http import require_POST
@@ -18,12 +18,14 @@ from .forms import (
     ConfirmarRetiradaForm,
     FuncionarioForm,
     ManutencaoForm,
+    RelatorioOperacionalForm,
     TarifaForm,
     ReservaForm, VeiculoForm,
 )
 from .models import (
     CATEGORIA_CHOICES,
     STATUS_CHOICES,
+    STATUS_RESERVA,
     Cliente,
     Devolucao,
     Funcionario,
@@ -917,3 +919,79 @@ def reativar_manutencao(request, id):
     messages.success(
         request, f'Veículo {veiculo} movido de volta para manutenção.')
     return redirect('listar_manutencoes')
+
+
+@login_required
+def relatorios(request):
+    form = RelatorioOperacionalForm()
+    dados = {'formulario': form}
+
+    if 'data_inicio' in request.GET or 'data_fim' in request.GET:
+        form = RelatorioOperacionalForm(request.GET)
+        dados['formulario'] = form
+
+        if form.is_valid():
+            dados['relatorio'] = montar_relatorio_operacional(
+                form.cleaned_data['data_inicio'],
+                form.cleaned_data['data_fim'],
+            )
+
+    return render(request, 'relatorios.html', dados)
+
+
+def montar_relatorio_operacional(data_inicio, data_fim):
+    """Reúne reservas e manutenções que ocorreram (total ou parcialmente)
+    dentro do período informado, com os totais financeiros."""
+    zero = Decimal('0')
+    inicio = timezone.make_aware(datetime.combine(data_inicio, time.min))
+    fim = timezone.make_aware(
+        datetime.combine(data_fim + timedelta(days=1), time.min))
+
+    reservas = Reserva.objects.select_related(
+        'cliente', 'veiculo', 'devolucao',
+    ).filter(
+        data_inicio__lt=fim,
+        data_fim__gte=inicio,
+    ).order_by('data_inicio')
+
+    manutencoes = Manutencao.objects.select_related('veiculo').filter(
+        Q(data_conclusao__isnull=True) | Q(data_conclusao__gte=inicio),
+        data_inicio__lt=fim,
+    ).order_by('data_inicio')
+
+    reservas_validas = reservas.exclude(status='X')
+    receita_locacoes = reservas_validas.aggregate(
+        total=Sum('valor_total'))['total'] or zero
+
+    multas = Devolucao.objects.filter(
+        reserva__in=reservas_validas,
+    ).aggregate(atraso=Sum('multa_atraso'), danos=Sum('multa_danos'))
+    receita_multas = (multas['atraso'] or zero) + (multas['danos'] or zero)
+
+    custo_manutencoes = manutencoes.aggregate(
+        total=Sum('custo'))['total'] or zero
+
+    receita_total = receita_locacoes + receita_multas
+
+    contagem_status = dict(
+        reservas.values_list('status').annotate(total=Count('id')))
+    reservas_por_status = [
+        {'status': rotulo, 'total': contagem_status.get(codigo, 0)}
+        for codigo, rotulo in STATUS_RESERVA
+    ]
+
+    return {
+        'data_inicio': data_inicio,
+        'data_fim': data_fim,
+        'gerado_em': timezone.localtime(),
+        'reservas': reservas,
+        'manutencoes': manutencoes,
+        'reservas_por_status': reservas_por_status,
+        'total_reservas': reservas.count(),
+        'total_manutencoes': manutencoes.count(),
+        'receita_locacoes': receita_locacoes,
+        'receita_multas': receita_multas,
+        'receita_total': receita_total,
+        'custo_manutencoes': custo_manutencoes,
+        'valor_agregado': receita_total - custo_manutencoes,
+    }

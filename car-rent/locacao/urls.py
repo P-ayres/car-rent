@@ -61,4 +61,5 @@ urlpatterns = [
          views.confirmar_devolucao, name='confirmar_devolucao'),
     path('locacoes/registrar_devolucao/',
          views.registrar_devolucao, name='registrar_devolucao'),
+    path('relatorios/', views.relatorios, name='relatorios'),
 ]
