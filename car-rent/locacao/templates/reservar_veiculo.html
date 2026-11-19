@@ -15,12 +15,29 @@
     <h1>Cadastrar Reserva</h1>
 
     <div class="container-principal form-container">
-        <a class="button button-secondary" href="{% url 'cadastrar_cliente' %}">Cadastrar cliente</a>
         <form method="post">
 
             {% csrf_token %}
 
-            {{ formulario.as_p }}
+            {{ formulario.non_field_errors }}
+
+            {% for campo in formulario %}
+                {{ campo.errors }}
+                <p>
+                    {% if campo.name == 'cliente' %}
+                        <span class="reserva-cliente-label">
+                            {{ campo.label_tag }}
+                            <a class="link-cadastrar-cliente" href="{% url 'cadastrar_cliente' %}">Cadastrar cliente</a>
+                        </span>
+                    {% else %}
+                        {{ campo.label_tag }}
+                    {% endif %}
+                    {{ campo }}
+                    {% if campo.help_text %}
+                        <span class="helptext">{{ campo.help_text }}</span>
+                    {% endif %}
+                </p>
+            {% endfor %}
 
             <button class="button" type="submit">Cadastrar</button>
 

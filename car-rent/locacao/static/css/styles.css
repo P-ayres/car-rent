@@ -67,7 +67,8 @@ textarea:focus-visible {
 }
 
 .container-principal {
-    width: min(100% - 32px, 1200px);
+    width: 95%;
+    max-width: 1320px;
     margin: 0 auto 36px;
 }
 
@@ -133,11 +134,13 @@ nav a:hover,
 
 .dropdown-content {
     position: absolute;
-    top: calc(100% + 4px);
+    top: 100%;
     left: 0;
     display: none;
     min-width: 220px;
     flex-direction: column;
+    z-index: 9999;
+    margin-top: 0;
     padding: 6px;
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 10px;
@@ -419,11 +422,37 @@ input[type="submit"]:disabled {
 table {
     width: 100%;
     border-collapse: collapse;
-    text-align: left;
+    text-align: center;
 }
 
 .tabela {
     margin: 0;
+}
+
+td::before {
+    display: none;
+}
+
+.tabela-reservas {
+    min-width: 1000px;
+}
+
+.tabela-reservas th,
+.tabela-reservas td {
+    white-space: nowrap;
+}
+
+.tabela-reservas th:last-child,
+.tabela-reservas td:last-child {
+    min-width: 120px;
+}
+
+.tabela-locacoes {
+    min-width: 1120px;
+}
+
+.tabela-locacoes td:not(:first-child) {
+    white-space: nowrap;
 }
 
 .tabela th,
@@ -432,7 +461,17 @@ th,
 td {
     padding: 12px 14px;
     border-bottom: 1px solid var(--borda);
+    text-align: center;
     vertical-align: middle;
+}
+
+.tabela td.nowrap,
+.tabela td:last-child,
+.tabela td a,
+.tabela td button,
+.tabela td .button,
+.tabela td input[type="submit"] {
+    white-space: nowrap;
 }
 
 .tabela th,
@@ -442,6 +481,19 @@ th {
     font-size: 0.86rem;
     font-weight: 700;
     white-space: nowrap;
+}
+
+.tabela th .sortable-heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.tabela th .sortable-heading a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .tabela td {
@@ -477,6 +529,48 @@ th {
     margin: 0;
 }
 
+.tabela td.manutencao-acoes > div {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.tabela td.manutencao-acoes form {
+    flex-wrap: nowrap;
+    margin: 0;
+}
+
+.tabela .manutencao-custo {
+    width: 70px;
+    min-height: 34px;
+    padding: 6px;
+}
+
+.reserva-cliente-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.reserva-cliente-label label {
+    margin-bottom: 0;
+}
+
+.link-cadastrar-cliente {
+    color: var(--cinza);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.link-cadastrar-cliente:hover {
+    color: var(--primaria);
+    text-decoration: underline;
+}
+
 .tabela .input-small,
 .input-small {
     width: 110px;
@@ -498,14 +592,16 @@ th {
 
 .form-pesquisa form {
     display: flex;
-    align-items: end;
+    justify-content: center;
+    align-items: center;
     gap: 12px;
     flex-wrap: wrap;
 }
 
 .form-pesquisa label {
     min-width: 110px;
-    flex: 1 1 140px;
+    flex: 0 1 160px;
+    text-align: center;
 }
 
 .form-pesquisa label input,
@@ -516,7 +612,11 @@ th {
 
 .form-pesquisa input,
 .form-pesquisa select {
-    flex: 1 1 160px;
+    flex: 0 1 220px;
+}
+
+.form-pesquisa input[type="hidden"] {
+    display: none;
 }
 
 .form-pesquisa .button,
@@ -771,15 +871,21 @@ th {
     }
 
     .form-pesquisa form {
-        align-items: stretch;
+        align-items: center;
         flex-direction: column;
     }
 
     .form-pesquisa input,
     .form-pesquisa select,
+    .form-pesquisa label {
+        width: 100%;
+        max-width: 420px;
+        text-align: center;
+    }
+
     .form-pesquisa .button,
     .form-pesquisa button {
-        width: 100%;
+        width: auto;
     }
 
     .dashboard {
@@ -793,6 +899,28 @@ th {
 
     .login-card {
         padding: 24px 20px;
+    }
+}
+
+@media print {
+    nav,
+    .nao-imprimir,
+    .messages {
+        display: none !important;
+    }
+
+    body {
+        background: #fff;
+    }
+
+    .table-responsive {
+        overflow: visible;
+        border: 0;
+        box-shadow: none;
+    }
+
+    .table-responsive table {
+        min-width: 0;
     }
 }
 
@@ -887,14 +1015,7 @@ th {
 }
 
 @media print {
-    nav,
-    .nao-imprimir,
-    .messages {
-        display: none !important;
-    }
-
     body {
-        background: #fff;
         font-size: 12px;
     }
 
@@ -933,15 +1054,5 @@ th {
     @page {
         size: A4 landscape;
         margin: 12mm;
-    }
-
-    .table-responsive {
-        overflow: visible;
-        border: 0;
-        box-shadow: none;
-    }
-
-    .table-responsive table {
-        min-width: 0;
     }
 }

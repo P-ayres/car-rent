@@ -26,7 +26,7 @@
         <table class="tabela">
             <thead>
                 <tr>
-                    <th>Nome  <a href="?ordem=crescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↑ </a>  <a href="?ordem=decrescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↓ </a>  </th>
+                    <th><span class="sortable-heading">Nome <a href="?ordem=crescente&nome_da_pesquisa={{ nome_da_pesquisa }}">↑</a> <a href="?ordem=decrescente&nome_da_pesquisa={{ nome_da_pesquisa }}">↓</a></span></th>
                     <th>Sobrenome</th>
                     <th>Cargo</th>
                     <th>Sexo</th>
@@ -63,6 +63,12 @@
                     </td>
                 </tr>
 
+                {% empty %}
+
+                <tr>
+                    <td colspan="8">Nenhum funcionário cadastrado</td>
+                </tr>
+
                 {% endfor %}
 
             </tbody>
@@ -70,11 +76,6 @@
         </table>
         </div>
 
-        <br><br>
-
-        <button class="button nao-imprimir" onclick="window.print()">
-             Imprimir Funcionários
-        </button>
     </div>
 </body>
 </html>

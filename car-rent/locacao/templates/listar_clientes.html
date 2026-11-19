@@ -45,10 +45,10 @@
                 <tr>
                     <td> {{ cliente.nome }} </td>
                     <td> {{ cliente.sobrenome }} </td>
-                    <td> {{ cliente.cpf|default:"-" }} </td>
-                    <td> {{ cliente.cnpj|default:"-" }} </td>
+                    <td class="nowrap"> {{ cliente.cpf|default:"-" }} </td>
+                    <td class="nowrap"> {{ cliente.cnpj|default:"-" }} </td>
                     <td> {{ cliente.endereco }} </td>
-                    <td> {{ cliente.telefone }} </td>
+                    <td class="nowrap"> {{ cliente.telefone }} </td>
                     <td>
                         <a class="action-link" href="{% url 'editar_cliente' cliente.id %}">Editar</a> |
                         <a class="action-link action-danger" href="{% url 'excluir_cliente' cliente.id %}" onclick="return confirm('Tem certeza que deseja remover este cliente?');">Remover</a>
