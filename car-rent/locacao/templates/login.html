@@ -11,25 +11,24 @@
     <title>Login - Locação de Veículos</title>
 </head>
 
-<body>
-    <h1>Locação de Veículos</h1>
-
-    <div class="form-container">
-
-        <h2>Entrar no sistema</h2>
-
-        <form method="post">
-            {% csrf_token %}
-
-            {{ form.as_p }}
-
-            <button class="button" type="submit">Entrar</button>
-        </form>
-
-        {% if form.errors %}
-        <p>Usuário ou senha inválidos.</p>
-        {% endif %}
-    </div>
+<body class="login-page">
+    <main class="login-shell">
+        <header class="login-brand">
+            <h1>Locação de Veículos</h1>
+            <p>Acesse o sistema para continuar</p>
+        </header>
+        <section class="form-container login-card">
+            <h2>Entrar no sistema</h2>
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button class="button" type="submit">Entrar</button>
+            </form>
+            {% if form.errors %}
+            <p class="login-error" role="alert">Usuário ou senha inválidos.</p>
+            {% endif %}
+        </section>
+    </main>
 </body>
 
 </html>

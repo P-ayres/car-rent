@@ -11,8 +11,48 @@
 <body>
     {% include '_menu.html' %}
     {% include '_mensagem.html' %}
-    <h1>Sistema de Locação de Veículos</h1>
+    <main class="dashboard">
+        <section class="dashboard-hero">
+            <p class="dashboard-eyebrow">Locação de veículos</p>
+            <h1>Bem-vindo ao seu painel de locação</h1>
+            <p>Gerencie reservas, acompanhe os veículos e encontre rapidamente as principais tarefas do sistema.</p>
+        </section>
 
-
+        <h2 class="dashboard-section-title">Acesso rápido</h2>
+        <section class="dashboard-grid" aria-label="Acesso rápido">
+            <a class="dashboard-card" href="{% url 'reservar_veiculo' %}">
+                <strong>Reservar veículo</strong>
+                <span>Consulte as opções e registre uma nova reserva.</span>
+                <span class="dashboard-card-link">Ir para reservas →</span>
+            </a>
+            <a class="dashboard-card" href="{% url 'listar_veiculos_disponiveis' %}">
+                <strong>Disponibilidade</strong>
+                <span>Veja os veículos disponíveis para locação.</span>
+                <span class="dashboard-card-link">Consultar veículos →</span>
+            </a>
+            <a class="dashboard-card" href="{% url 'listar_reservas' %}">
+                <strong>Gerenciar reservas</strong>
+                <span>Acompanhe os detalhes e o andamento das reservas.</span>
+                <span class="dashboard-card-link">Ver reservas →</span>
+            </a>
+            {% if user.is_superuser %}
+            <a class="dashboard-card" href="{% url 'listar_veiculos' %}">
+                <strong>Frota de veículos</strong>
+                <span>Consulte os veículos cadastrados e seus status.</span>
+                <span class="dashboard-card-link">Gerenciar frota →</span>
+            </a>
+            <a class="dashboard-card" href="{% url 'listar_manutencoes' %}">
+                <strong>Manutenções</strong>
+                <span>Acompanhe os serviços e o estado da frota.</span>
+                <span class="dashboard-card-link">Ver manutenções →</span>
+            </a>
+            <a class="dashboard-card" href="{% url 'listar_funcionarios' %}">
+                <strong>Equipe</strong>
+                <span>Gerencie os funcionários do sistema.</span>
+                <span class="dashboard-card-link">Ver funcionários →</span>
+            </a>
+            {% endif %}
+        </section>
+    </main>
 </body>
 </html>
