@@ -21,10 +21,11 @@
                 <button class="button pesquisar" type="submit">Pesquisar</button> 
             </form>
         </div>
-        <table class="tabela" border="">
+        <div class="table-responsive">
+        <table class="tabela tabela-reservas">
             <thead>
                 <tr>
-                    <th>Cliente  <a href="?ordem=crescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↑ </a>  <a href="?ordem=decrescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↓ </a>  </th>
+                    <th><span class="sortable-heading">Cliente <a href="?ordem=crescente&nome_da_pesquisa={{ nome_da_pesquisa }}">↑</a> <a href="?ordem=decrescente&nome_da_pesquisa={{ nome_da_pesquisa }}">↓</a></span></th>
                     <th>Veiculo</th>
                     <th>Data de retirada</th>
                     <th>Data de devolução</th>
@@ -44,27 +45,38 @@
                 <tr>
                     <td> {{ reserva.cliente }} </td>
                     <td> {{ reserva.veiculo }} </td>
-                    <td> {{ reserva.data_inicio }} </td>
-                    <td> {{ reserva.data_fim }} </td>
-                    <td> {{ reserva.data_cadastro }} </td>
-                    <td> {{ reserva.quantidade_dias }} </td>
-                    <td title="Locação R$ {{ reserva.valor_locacao|floatformat:'2g' }} + {{ reserva.quantidade_dias }} x diária R$ {{ reserva.valor_diaria|floatformat:'2g' }}"> R$ {{ reserva.valor_total|floatformat:"2g" }} </td>
+                    <td class="nowrap"> {{ reserva.data_inicio }} </td>
+                    <td class="nowrap"> {{ reserva.data_fim }} </td>
+                    <td class="nowrap"> {{ reserva.data_cadastro }} </td>
+                    <td class="nowrap"> {{ reserva.quantidade_dias }} </td>
+                    <td class="nowrap" title="Locação R$ {{ reserva.valor_locacao|floatformat:'2g' }} + {{ reserva.quantidade_dias }} x diária R$ {{ reserva.valor_diaria|floatformat:'2g' }}"> R$ {{ reserva.valor_total|floatformat:"2g" }} </td>
                     {% with devolucao=reserva.devolucao %}
                         {% if devolucao %}
-                            <td>R$ {{ devolucao.valor_multa_total|floatformat:"2g" }}</td>
-                            <td>R$ {{ devolucao.valor_final|floatformat:"2g" }}</td>
+                            <td class="nowrap">R$ {{ devolucao.valor_multa_total|floatformat:"2g" }}</td>
+                            <td class="nowrap">R$ {{ devolucao.valor_final|floatformat:"2g" }}</td>
                         {% else %}
-                            <td>—</td>
-                            <td>—</td>
+                            <td class="nowrap">—</td>
+                            <td class="nowrap">—</td>
                         {% endif %}
                     {% endwith %}
-                    <td>{{ reserva.get_status_display }}</td>
+                    <td>
+                        {% if reserva.status == 'P' %}<span class="badge badge-warning">{{ reserva.get_status_display }}</span>
+                        {% elif reserva.status == 'A' %}<span class="badge badge-info">{{ reserva.get_status_display }}</span>
+                        {% elif reserva.status == 'C' %}<span class="badge badge-success">{{ reserva.get_status_display }}</span>
+                        {% else %}<span class="badge badge-danger">{{ reserva.get_status_display }}</span>{% endif %}
+                    </td>
                     <td>
                         {% if reserva.status == 'P' %}
-                        <a href="{% url 'editar_reserva' reserva.id %}">Editar</a> | 
-                        <a href="{% url 'cancelar_reserva' reserva.id %}" onclick="return confirm('Tem certeza que deseja cancelar esta reserva?');">Cancelar</a>
+                        <a class="action-link" href="{% url 'editar_reserva' reserva.id %}">Editar</a> |
+                        <a class="action-link action-danger" href="{% url 'cancelar_reserva' reserva.id %}" onclick="return confirm('Tem certeza que deseja cancelar esta reserva?');">Cancelar</a>
                         {% endif %}
                     </td>
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="11">Nenhuma reserva cadastrada</td>
                 </tr>
 
                 {% endfor %}
@@ -72,6 +84,7 @@
             </tbody>
 
         </table>
+        </div>
     </div>
 </body>
 </html>

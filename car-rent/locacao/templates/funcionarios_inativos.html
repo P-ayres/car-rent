@@ -11,11 +11,13 @@
 <body>
 
     {% include '_menu.html' %}
+    {% include '_mensagem.html' %}
 
     <h1> Lista de Funcionários Inativos </h1>
 
     <div class="lista-funcionario container-principal">
-        <table class="tabela" border="">
+        <div class="table-responsive">
+        <table class="tabela">
 
             <thead>
                 <tr>
@@ -25,6 +27,7 @@
                     <th>Sexo</th>
                     <th>Data de cadastro</th>
                     <th>Usuário</th>
+                    <th>Status</th>
                     <th>Ações</th>
                 </tr>
             </thead>
@@ -46,10 +49,17 @@
                             Sem conta
                         {% endif %}
                     </td>
-                    <td> 
-                        <a href="{% url 'excluir_funcionario' funcionario.id %} " onclick="return confirm('Tem certeza que deseja excluir este funcionário?');"> Excluir </a> | 
-                        <a href="{% url 'ativar_funcionario' funcionario.id %} " onclick="return confirm('Tem certeza que deseja ativar este funcionário?');"> Ativar </a> 
+                    <td><span class="badge badge-neutral">Inativo</span></td>
+                    <td>
+                        <a class="action-link action-danger" href="{% url 'excluir_funcionario' funcionario.id %}" onclick="return confirm('Tem certeza que deseja excluir este funcionário?');">Excluir</a> |
+                        <a class="action-link" href="{% url 'ativar_funcionario' funcionario.id %}" onclick="return confirm('Tem certeza que deseja ativar este funcionário?');">Ativar</a>
                     </td>
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="8">Nenhum funcionário inativo</td>
                 </tr>
 
                 {% endfor %}
@@ -57,7 +67,8 @@
             </tbody>
 
         </table>
-    <div>
+        </div>
+    </div>
 
 </body>
 </html>

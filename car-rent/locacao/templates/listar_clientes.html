@@ -14,11 +14,7 @@
 
     <h1> Gerenciar Clientes </h1>
 
-    {% if messages %}
-        {% for message in messages %}
-            <p>{{ message }}</p>
-        {% endfor %}
-    {% endif %}
+    {% include '_mensagem.html' %}
 
     <div class="lista-funcionario container-principal">
         <div class="form-pesquisa nao-imprimir">
@@ -27,7 +23,8 @@
                 <button class="button pesquisar" type="submit">Pesquisar</button> 
             </form>
         </div>
-        <table class="tabela" border="">
+        <div class="table-responsive">
+        <table class="tabela">
 
             <thead>
                 <tr>
@@ -48,13 +45,13 @@
                 <tr>
                     <td> {{ cliente.nome }} </td>
                     <td> {{ cliente.sobrenome }} </td>
-                    <td> {{ cliente.cpf|default:"-" }} </td>
-                    <td> {{ cliente.cnpj|default:"-" }} </td>
+                    <td class="nowrap"> {{ cliente.cpf|default:"-" }} </td>
+                    <td class="nowrap"> {{ cliente.cnpj|default:"-" }} </td>
                     <td> {{ cliente.endereco }} </td>
-                    <td> {{ cliente.telefone }} </td>
+                    <td class="nowrap"> {{ cliente.telefone }} </td>
                     <td>
-                        <a href="{% url 'editar_cliente' cliente.id %}"> Editar </a> |
-                        <a href="{% url 'excluir_cliente' cliente.id %}" onclick="return confirm('Tem certeza que deseja remover este cliente?');"> Remover </a>
+                        <a class="action-link" href="{% url 'editar_cliente' cliente.id %}">Editar</a> |
+                        <a class="action-link action-danger" href="{% url 'excluir_cliente' cliente.id %}" onclick="return confirm('Tem certeza que deseja remover este cliente?');">Remover</a>
                     </td>
                 </tr>
 
@@ -69,6 +66,7 @@
             </tbody>
 
         </table>
+        </div>
     </div>
 
 </body>

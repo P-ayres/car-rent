@@ -11,11 +11,7 @@
 <body>
 
     {% include '_menu.html' %}
-
-    {% for message in messages %}
-    <p>{{ message }}</p>
-    {% endfor %}
-
+    {% include '_mensagem.html' %}
 
     
     <h1> Lista de Veículos </h1>
@@ -48,11 +44,12 @@
                 <button class="button pesquisar" type="submit">Pesquisar</button> 
             </form>
         </div>
-        <table class="tabela" border="">
+        <div class="table-responsive">
+        <table class="tabela">
 
             <thead>
                 <tr>
-                    <th>Modelo  <a href="?ordem=crescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↑ </a>  <a href="?ordem=decrescente&nome_da_pesquisa={{ nome_da_pesquisa }}"> ↓ </a>  </th>
+                    <th><span class="sortable-heading">Modelo <a href="?ordem=crescente&nome_da_pesquisa={{ nome_da_pesquisa }}">↑</a> <a href="?ordem=decrescente&nome_da_pesquisa={{ nome_da_pesquisa }}">↓</a></span></th>
                     <th>Placa</th>
                     <th>Categoria</th>
                     <th>Status</th>
@@ -70,13 +67,19 @@
                     <td> {{ veiculo.modelo }} </td>
                     <td> {{ veiculo.placa }} </td>
                     <td> {{ veiculo.get_categoria_display }} </td>
-                    <td> {{ veiculo.get_status_display }} </td>
+                    <td>
+                        {% if veiculo.status == 'D' %}<span class="badge badge-success">{{ veiculo.get_status_display }}</span>
+                        {% elif veiculo.status == 'R' or veiculo.status == 'I' %}<span class="badge badge-info">{{ veiculo.get_status_display }}</span>
+                        {% elif veiculo.status == 'M' %}<span class="badge badge-warning">{{ veiculo.get_status_display }}</span>
+                        {% elif veiculo.status == 'P' %}<span class="badge badge-danger">{{ veiculo.get_status_display }}</span>
+                        {% else %}<span class="badge badge-neutral">{{ veiculo.get_status_display }}</span>{% endif %}
+                    </td>
                     <td> {{ veiculo.preco_locacao }} </td>
                     <td> {{ veiculo.marca }} </td>
 
                     <td class="nao-imprimir"> 
-                        <a href="{% url 'editar_veiculo' veiculo.id %}"> Editar </a> |
-                        <a href="{% url 'excluir_veiculo' veiculo.id %}" onclick="return confirm('Tem certeza que deseja remover este veículo?');"> Remover </a>
+                        <a class="action-link" href="{% url 'editar_veiculo' veiculo.id %}">Editar</a> |
+                        <a class="action-link action-danger" href="{% url 'excluir_veiculo' veiculo.id %}" onclick="return confirm('Tem certeza que deseja remover este veículo?');">Remover</a>
                     </td>
                 </tr>
 
@@ -85,12 +88,8 @@
             </tbody>
 
         </table>
+        </div>
 
-        <br><br>
-
-        <button class="button nao-imprimir" onclick="window.print()">
-             Imprimir Veículos
-        </button>
     </div>
 </body>
 </html>
